@@ -1,6 +1,6 @@
 
 import React from 'react';
-// Import CSS file if you have one, e.g., import './Product.css';
+import './Product.css';
 
 function Product({ title, price, description }) {
   return (
