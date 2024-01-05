@@ -2,5 +2,29 @@
 /* Home.css */
 .home-container {
     text-align: center;
-}
+  }
+  
+  .products-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;  /* Spacing between cards */
+    padding: 20px;
+  }
+  
+  /* Style for individual Product components (cards) */
+  .product {  
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    padding: 20px;
+    width: 300px; /* or any other fixed width */
+    text-align: left;
+  }
+
+  @media (max-width: 600px) {  /* Adjust breakpoint as needed */
+    .products-container {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
   
