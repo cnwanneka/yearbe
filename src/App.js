@@ -6,8 +6,8 @@ import Home from './components/Home';
 import About from './components/About';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import CartPage from './components/CartPage'; // Import the CartPage component
 import './App.css';
-import Cart from './components/Cart';
 import { CartProvider } from './components/CartContext';
 
 function App() {
@@ -16,12 +16,12 @@ function App() {
       <Router>
         <div className="app-container">
           <Header />
-          <Cart />
           <div className="content-wrap">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/cart" element={<CartPage />} />
             </Routes>
           </div>
           <Footer />

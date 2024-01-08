@@ -29,3 +29,16 @@
     color: #333;
   }
   
+  nav ul {
+    display: flex;
+    list-style-type: none;
+    /* ... other styles ... */
+}
+
+.shopping-cart-icon {
+    margin-left: auto; /* This pushes the icon to the right */
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem; /* Adjust the size as needed */
+    cursor: pointer;
+}
