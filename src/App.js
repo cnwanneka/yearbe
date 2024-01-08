@@ -7,22 +7,26 @@ import About from './components/About';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import './App.css';
+import { CartProvider } from './components/CartContext';
 
 function App() {
   return (
-    <Router>
-      <div className="app-container">
-        <Header />
-        <div className="content-wrap">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-          </Routes>
+    <CartProvider>
+      <Router>
+        <div className="app-container">
+          <Header />
+          <div className="content-wrap">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+            </Routes>
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    </Router>
+      </Router>
+    </CartProvider>
+
   );
 }
 
