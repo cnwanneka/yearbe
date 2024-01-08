@@ -7,6 +7,7 @@ import About from './components/About';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import './App.css';
+import Cart from './components/Cart';
 import { CartProvider } from './components/CartContext';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
       <Router>
         <div className="app-container">
           <Header />
+          <Cart />
           <div className="content-wrap">
             <Routes>
               <Route path="/" element={<Home />} />
