@@ -1,5 +1,4 @@
 
-/* Home.css */
 .home-container {
     text-align: center;
   }
@@ -27,4 +26,15 @@
       align-items: center;
     }
   }
+
+
+.product-link {
+  text-decoration: none;
+  color: inherit; /* To ensure text color is not affected by link */
+}
+
+.product-link:hover {
+  cursor: pointer;
+}
+
   

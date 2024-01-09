@@ -7,25 +7,26 @@ import SingleBedsheetImage from '../images/single-bedsheet.jpg'; // Import the i
 
 function Home() {
   return (
-    <div className="home-container">
-      <h1>Welcome to Yearbe</h1>
-      <div className="products-container">
-        <Product 
-          title="White Fitted Double Bedsheet" 
-          price="9.99" 
-          description="High-quality double bedsheet" 
-          imageUrl={DoubleBedsheetImage} // imported image
-        />
-        <Product 
-          title="White Fitted Single Bedsheet" 
-          price="7.99" 
-          description="Comfortable single bedsheet" 
-          imageUrl={SingleBedsheetImage} // imported image 
-        />
+      <div className="home-container">
+          <h1>Welcome to Yearbe</h1>
+          <div className="products-container">
+              <Product 
+                title="White Fitted Double Bedsheet" 
+                price="9.99" 
+                description="High-quality double bedsheet" 
+                imageUrl={DoubleBedsheetImage}
+                detailPath="/double-bedsheet"
+              />
+              <Product 
+                title="White Fitted Single Bedsheet" 
+                price="7.99" 
+                description="Comfortable single bedsheet" 
+                imageUrl={SingleBedsheetImage}
+                detailPath="/single-bedsheet"
+              />
+          </div>
       </div>
-    </div>
   );
 }
 
 export default Home;
-
