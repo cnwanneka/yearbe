@@ -1,6 +1,6 @@
 
 import React, { useContext } from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
 import './Product.css';
 import { CartContext } from './CartContext';
 
@@ -26,4 +26,5 @@ function Product({ title, price, description, imageUrl, detailPath }) {
 }
 
 export default Product;
+
 

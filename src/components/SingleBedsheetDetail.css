@@ -1,0 +1,18 @@
+
+.single-bedsheet-detail {
+    text-align: center;
+    padding: 20px;
+}
+
+.single-bedsheet-detail img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Add Media Queries for responsive design */
+@media (min-width: 768px) {
+    .single-bedsheet-detail img {
+        max-width: 50%;
+    }
+}
+

@@ -1,15 +1,14 @@
 
 import React from 'react';
 import DoubleBedsheetImage from '../images/double-bedsheet.jpg';
+import './DoubleBedsheetDetail.css';
 
 function DoubleBedsheetDetail() {
     return (
-        <div>
+        <div className="double-bedsheet-detail">
             <h2>White Fitted Double Bedsheet</h2>
             <img src={DoubleBedsheetImage} alt="Double Bed Sheet" />
-            <p>Price: £9.99</p>
-            <p>Description: High-quality double bedsheet.</p>
-            {/* Additional details here */}
+            <p>High-quality double bedsheet</p>
         </div>
     );
 }
