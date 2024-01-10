@@ -6,9 +6,10 @@ import './DoubleBedsheetDetail.css';
 function DoubleBedsheetDetail() {
     return (
         <div className="double-bedsheet-detail">
-            <h2>White Fitted Double Bedsheet</h2>
-            <img src={DoubleBedsheetImage} alt="Double Bed Sheet" />
-            <p>High-quality double bedsheet</p>
+            <h1>White Fitted Double Bedsheet - Luxurious Comfort</h1>
+            <img src={DoubleBedsheetImage} alt="Luxurious white fitted double bedsheet" />
+            <h2>Detailed Description</h2>
+            <p>Experience the ultimate comfort with our high-quality, white fitted double bedsheets. Designed for both style and durability, these bedsheets are a perfect addition to any bedroom.</p>
         </div>
     );
 }
