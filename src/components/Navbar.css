@@ -37,19 +37,28 @@
 
 .shopping-cart-icon {
     margin-left: auto; /* This pushes the icon to the right */
-    display: flex;
+    position: relative;
+    display: inline-block; /* Ensure this is inline-block or block */
     align-items: center;
     font-size: 1.5rem; /* Adjust the size as needed */
     cursor: pointer;
 }
 
 .cart-item-count {
-  background-color: red;
+  background-color: green;
   color: white;
-  border-radius: 50%;
-  padding: 0 5px;
-  font-size: 0.8em;
+  border-radius: 50%; /* Make it round */
+  padding: 0; /* Remove padding */
+  font-size: 0.7em; /* Adjust font size as needed */
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: 50%;
+  right: 0;
+  transform: translate(50%, -50%);
+  height: 20px; /* Fixed height */
+  width: 20px; /* Fixed width, same as height to make it round */
+  display: flex;
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
+  text-align: center; /* Ensure text is centered */
 }
+
