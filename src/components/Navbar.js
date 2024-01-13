@@ -19,7 +19,7 @@ function Navbar() {
                 <li><Link to="/about">About</Link></li>
                 <li><Link to="/contact">Contact</Link></li>
                 <li className="shopping-cart-icon">
-                    <Link to="/cart">
+                    <Link to="/basket">
                         <HiOutlineShoppingBag />
                         {totalItems > 0 && <span className="cart-item-count">{totalItems}</span>}
                     </Link>

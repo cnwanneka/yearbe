@@ -7,6 +7,7 @@ import About from './components/About';
 import Contact from './components/Contact'; 
 import Footer from './components/Footer';
 import CartPage from './components/CartPage'; 
+import BasketPage from './components/BasketPage';
 import './App.css';
 import { CartProvider } from './components/CartContext';
 import SingleBedsheetDetail from './components/SingleBedsheetDetail';
@@ -26,6 +27,7 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<CartPage />} />
+              <Route path="/basket" element={<BasketPage />} />
             </Routes>
           </div>
           <Footer />
