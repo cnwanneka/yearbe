@@ -7,6 +7,7 @@ import About from './components/About';
 import Contact from './components/Contact'; 
 import Footer from './components/Footer';
 import BasketPage from './components/BasketPage';
+import CheckoutPage from './components/CheckoutPage';
 import './App.css';
 import { CartProvider } from './components/CartContext';
 import SingleBedsheetDetail from './components/SingleBedsheetDetail';
@@ -26,6 +27,7 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/basket" element={<BasketPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
             </Routes>
           </div>
           <Footer />
