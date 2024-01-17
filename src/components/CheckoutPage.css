@@ -1,0 +1,47 @@
+
+/* CheckoutPage.css */
+
+.checkout-container {
+    margin: 0 auto;
+    max-width: 900px;
+    padding: 20px;
+}
+
+.checkout-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.column {
+    flex: 1;
+}
+
+.column h2 {
+    margin-bottom: 10px;
+}
+
+.column form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.column form input, .column form select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.checkout-container button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.checkout-container button:hover {
+    background-color: #45a049;
+}
