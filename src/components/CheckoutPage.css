@@ -45,3 +45,19 @@
 .checkout-container button:hover {
     background-color: #45a049;
 }
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.form-row select, .form-row input {
+    flex-grow: 1;
+    margin-right: 10px;
+    padding: 10px;
+}
+
+.form-row input:last-child {
+    margin-right: 0; /* Removes margin from the last input in a row */
+}

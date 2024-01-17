@@ -44,12 +44,25 @@ function CheckoutPage() {
                 <div className="column">
                     <h2>2. Your Details</h2>
                     <form>
-                        {/* Additional form fields */}
-                        <select name="title" onChange={handleFormChange} value={deliveryDetails.title}>
-                            <option value="Mrs">Mrs</option>
-                            {/* Add other options */}
-                        </select>
-                        {/* Add input fields for firstName, lastName, mobile, and email */}
+                        <div className="form-row">
+                            <select name="title" onChange={handleFormChange} value={deliveryDetails.title}>
+                                <option value="Mr">Mr</option>
+                                <option value="Mrs">Mrs</option>
+                                <option value="Miss">Miss</option>
+                                <option value="Ms">Ms</option>
+                                <option value="Dr">Dr</option>
+                                <option value="Mx">Mx</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="text" name="firstName" placeholder="First Name" onChange={handleFormChange} />
+                            <input type="text" name="lastName" placeholder="Last Name" onChange={handleFormChange} />
+                        </div>
+                        <div className="form-row">
+                            <input type="tel" name="mobile" placeholder="Mobile Number" onChange={handleFormChange} />
+                        </div>
+                        <div className="form-row">
+                            <input type="email" name="email" placeholder="Email Address" onChange={handleFormChange} />
+                        </div>
                         <input type="checkbox" checked={optOut} onChange={handleOptOutChange} />
                         <p>We'll stay in touch with offers that you might like, see our privacy policy for details. If you'd prefer we didn't, just opt out by ticking the box.</p>
                         <p>By continuing, I agree to the Terms and Conditions and Privacy Policy
