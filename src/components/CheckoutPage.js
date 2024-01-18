@@ -1,12 +1,47 @@
 // CheckoutPage.js
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import { useNavigate } from 'react-router-dom';
 import './CheckoutPage.css';
 
 function CheckoutPage() {
+
+    const { isLoaded } = useLoadScript({
+        googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY, // Ensure your .env file has this variable
+        libraries: ["places"],
+    });
+
+    if (!isLoaded) return <div>Loading...</div>;
+
+
+
     const [deliveryDetails, setDeliveryDetails] = useState({ address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '' });
     const [optOut, setOptOut] = useState(false);
     const navigate = useNavigate();
+
+    // Declare addressInputRef using useRef hook
+    const addressInputRef = useRef(null);
+
+    useEffect(() => {
+        if (!addressInputRef.current) return;
+    
+        const autocomplete = new window.google.maps.places.Autocomplete(
+            addressInputRef.current,
+            { types: ['geocode'] }
+        );
+    
+        autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                console.log('No details available for input:', place.name);
+                return;
+            }
+    
+            // Update the address in the state
+            setDeliveryDetails({ ...deliveryDetails, address: place.formatted_address });
+        });
+    }, []);
+    
 
     const handleFormChange = (event) => {
         setDeliveryDetails({ ...deliveryDetails, [event.target.name]: event.target.value });
@@ -36,8 +71,10 @@ function CheckoutPage() {
                     <h2>1. Delivery</h2>
                     <p>Where would you like your items delivered to?</p>
                     <form>
-                        <input type="text" name="address" placeholder="Enter your postcode or address" onChange={handleFormChange} />
-                        <p>Enter Address Manually</p>
+                        <Autocomplete>
+                            <input type="text" name="address" placeholder="Enter your address" ref={addressInputRef} onChange={handleFormChange} />
+                        </Autocomplete>
+                        <p>Address Manually</p>
                         {/* Add logic for address suggestions here */}
                     </form>
                 </div>
