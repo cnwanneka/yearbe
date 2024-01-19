@@ -11,13 +11,11 @@ function CheckoutPage() {
         libraries: ["places"],
     });
 
-    if (!isLoaded) return <div>Loading...</div>;
-
-
-
     const [deliveryDetails, setDeliveryDetails] = useState({ address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '' });
     const [optOut, setOptOut] = useState(false);
     const navigate = useNavigate();
+    const deliveryDetailsRef = useRef(deliveryDetails);
+
 
     // Declare addressInputRef using useRef hook
     const addressInputRef = useRef(null);
@@ -38,9 +36,14 @@ function CheckoutPage() {
             }
     
             // Update the address in the state
-            setDeliveryDetails({ ...deliveryDetails, address: place.formatted_address });
+            setDeliveryDetails({ ...deliveryDetailsRef.current, address: place.formatted_address });
         });
     }, []);
+
+    useEffect(() => {
+        deliveryDetailsRef.current = deliveryDetails;
+    }, [deliveryDetails]);
+    
     
 
     const handleFormChange = (event) => {
@@ -62,6 +65,8 @@ function CheckoutPage() {
         // Navigate to a payment page or handle the payment process
         navigate('/payment'); // Example: navigate to a payment page
     };
+
+    if (!isLoaded) return <div>Loading...</div>;
 
     return (
         <div className="checkout-container">
