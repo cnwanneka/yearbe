@@ -1,15 +1,22 @@
 // CheckoutPage.js
+
 import React, { useState, useRef, useEffect } from 'react';
-import { useLoadScript, Autocomplete } from "@react-google-maps/api";
+import { useLoadScript } from "@react-google-maps/api";
 import { useNavigate } from 'react-router-dom';
 import './CheckoutPage.css';
 
-function CheckoutPage() {
+const libraries = ["places"];
 
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY, // Ensure your .env file has this variable
-        libraries: ["places"],
+function CheckoutPage() {
+    console.log("CheckoutPage is rendering");
+    const addressInputRef = useRef(null);
+
+    const { isLoaded, loadError } = useLoadScript({
+        googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+        libraries,
     });
+
+    console.log("Script loaded:", isLoaded);
 
     const [deliveryDetails, setDeliveryDetails] = useState({ address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '' });
     const [optOut, setOptOut] = useState(false);
@@ -17,19 +24,18 @@ function CheckoutPage() {
     const deliveryDetailsRef = useRef(deliveryDetails);
 
 
-    // Declare addressInputRef using useRef hook
-    const addressInputRef = useRef(null);
-
     useEffect(() => {
+        console.log("Ref on mount:", addressInputRef.current);
         if (!addressInputRef.current) return;
     
         const autocomplete = new window.google.maps.places.Autocomplete(
             addressInputRef.current,
-            { types: ['geocode'] }
+            {}
         );
     
-        autocomplete.addListener('place_changed', () => {
+        const handlePlaceSelect = () => {
             const place = autocomplete.getPlace();
+            console.log(place); // Debugging
             if (!place.geometry) {
                 console.log('No details available for input:', place.name);
                 return;
@@ -37,7 +43,14 @@ function CheckoutPage() {
     
             // Update the address in the state
             setDeliveryDetails({ ...deliveryDetailsRef.current, address: place.formatted_address });
-        });
+        };
+
+        autocomplete.addListener('place_changed', handlePlaceSelect);
+
+        // Cleanup function
+        return () => {
+            window.google.maps.event.clearInstanceListeners(autocomplete);
+        };
     }, []);
 
     useEffect(() => {
@@ -68,6 +81,11 @@ function CheckoutPage() {
 
     if (!isLoaded) return <div>Loading...</div>;
 
+    if (loadError) {
+        return <div>Error loading maps</div>;
+    }
+
+
     return (
         <div className="checkout-container">
             <h1>Delivery</h1>
@@ -76,11 +94,14 @@ function CheckoutPage() {
                     <h2>1. Delivery</h2>
                     <p>Where would you like your items delivered to?</p>
                     <form>
-                        <Autocomplete>
-                            <input type="text" name="address" placeholder="Enter your address" ref={addressInputRef} onChange={handleFormChange} />
-                        </Autocomplete>
+                        <input
+                            type="text"
+                            name="address" 
+                            placeholder="Enter your address" 
+                            ref={addressInputRef} 
+                            onChange={handleFormChange} 
+                        />
                         <p>Address Manually</p>
-                        {/* Add logic for address suggestions here */}
                     </form>
                 </div>
                 <div className="column">
