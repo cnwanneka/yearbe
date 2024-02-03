@@ -1,7 +1,7 @@
 // CheckoutPage.js
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useLoadScript } from "@react-google-maps/api";
+import { useLoadScript } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import './CheckoutPage.css';
 
@@ -9,49 +9,52 @@ const libraries = ["places"];
 
 function CheckoutPage() {
     console.log("CheckoutPage is rendering");
-    const addressInputRef = useRef(null);
-
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
         libraries,
     });
-
-    console.log("Script loaded:", isLoaded);
-
+    
+    const addressInputRef = useRef(null);
     const [deliveryDetails, setDeliveryDetails] = useState({ address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '' });
     const [optOut, setOptOut] = useState(false);
     const navigate = useNavigate();
     const deliveryDetailsRef = useRef(deliveryDetails);
 
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        console.log("Ref on mount:", addressInputRef.current);
-        if (!addressInputRef.current) return;
-    
-        const autocomplete = new window.google.maps.places.Autocomplete(
-            addressInputRef.current,
-            {}
-        );
-    
-        const handlePlaceSelect = () => {
-            const place = autocomplete.getPlace();
-            console.log(place); // Debugging
-            if (!place.geometry) {
-                console.log('No details available for input:', place.name);
-                return;
-            }
-    
-            // Update the address in the state
-            setDeliveryDetails({ ...deliveryDetailsRef.current, address: place.formatted_address });
-        };
-
-        autocomplete.addListener('place_changed', handlePlaceSelect);
-
-        // Cleanup function
-        return () => {
-            window.google.maps.event.clearInstanceListeners(autocomplete);
-        };
+        setIsMounted(true);
+        return () => setIsMounted(false); // Cleanup function
     }, []);
+
+    useEffect(() => {
+        console.log("Script loaded:", isLoaded);
+        if (isMounted && addressInputRef.current && isLoaded) {
+            console.log("Component mounted and ref is attached:", addressInputRef.current);
+    
+            const autocomplete = new window.google.maps.places.Autocomplete(
+                addressInputRef.current,
+                {types: ['geocode']}
+            );
+    
+            const handlePlaceSelect = () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) {
+                    console.log('No details available for input:', place.name);
+                    return;
+                }
+                // Update the address in the state
+                setDeliveryDetails({ ...deliveryDetailsRef.current, address: place.formatted_address });
+            };
+
+            autocomplete.addListener('place_changed', handlePlaceSelect);
+
+            // Cleanup function
+            return () => {
+                window.google.maps.event.clearInstanceListeners(autocomplete);
+            };
+        }    
+    }, [isMounted, addressInputRef, isLoaded, setDeliveryDetails]); // Ensure addressInputRef is listed as a dependency if using strict mode
 
     useEffect(() => {
         deliveryDetailsRef.current = deliveryDetails;
