@@ -34,7 +34,10 @@ function CheckoutPage() {
     
             const autocomplete = new window.google.maps.places.Autocomplete(
                 addressInputRef.current,
-                {types: ['geocode']}
+                {
+                    types: ['geocode'], // Focus on address types
+                    componentRestrictions: { country: "GB" } // Restrict to the UK
+                }
             );
     
             const handlePlaceSelect = () => {
