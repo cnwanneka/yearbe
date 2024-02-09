@@ -1,6 +1,7 @@
 // CheckoutPage.js
 
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios'; 
 import { useLoadScript } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import './CheckoutPage.css';
@@ -20,7 +21,12 @@ function CheckoutPage() {
     const navigate = useNavigate();
     const deliveryDetailsRef = useRef(deliveryDetails);
 
+    const [addressOptions, setAddressOptions] = useState([]);
+
+    const [postcodeInput, setPostcodeInput] = useState('');
+    
     const [isMounted, setIsMounted] = useState(false);
+
 
     useEffect(() => {
         setIsMounted(true);
@@ -62,6 +68,35 @@ function CheckoutPage() {
     useEffect(() => {
         deliveryDetailsRef.current = deliveryDetails;
     }, [deliveryDetails]);
+
+    useEffect(() => {
+        // Only attempt to fetch addresses if a full, valid postcode is detected
+        const validPostcodePattern = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
+        if (validPostcodePattern.test(postcodeInput)) {
+          fetchAddresses(postcodeInput);
+        }
+    }, [postcodeInput]); // Depend on postcodeInput to re-trigger this effect
+      
+
+
+
+    const fetchAddresses = async (postcodeInput) => {
+        const encodedPostcode = encodeURIComponent(postcodeInput);
+        const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY; 
+        const url = `https://api.getAddress.io/autocomplete/${encodedPostcode}?api-key=${apiKey}`;
+        try {
+            const response = await axios.get(url);
+            console.log("API Response:", response.data); // Debugging 
+            setAddressOptions(response.data.addresses || []); // Adjust according to the API response structure
+        } catch (error) {
+            console.error('Error fetching addresses:', error);
+            setAddressOptions([]); // Clearing addresses in case of error
+        }
+    };
+    
+    const handleAddressOrPostcodeChange = (e) => {
+        setPostcodeInput(e.target.value);
+    };
     
     
 
@@ -73,7 +108,8 @@ function CheckoutPage() {
         setOptOut(!optOut);
     };
 
-    const handleCheckout = () => {
+    const handleCheckout = (e) => {
+        e.preventDefault(); // Prevent default form submission
         // add logic for proceeding to the payment step
     
         if (!deliveryDetails.address || !deliveryDetails.firstName || !deliveryDetails.lastName) {
@@ -99,16 +135,24 @@ function CheckoutPage() {
                 <div className="column">
                     <h2>1. Delivery</h2>
                     <p>Where would you like your items delivered to?</p>
-                    <form>
-                        <input
-                            type="text"
-                            name="address" 
-                            placeholder="Enter your address" 
-                            ref={addressInputRef} 
-                            onChange={handleFormChange} 
-                        />
-                        <p>Address Manually</p>
+                    <form onSubmit={handleCheckout}>
+                    <input
+                        type="text"
+                        name="address"
+                        placeholder="Enter your postcode or address"
+                        value={deliveryDetails.address || postcodeInput}
+                        onChange={handleAddressOrPostcodeChange}
+                    />
+
+                        {addressOptions && addressOptions.length > 0 && (
+                            <select onChange={(e) => setDeliveryDetails({ ...deliveryDetails, address: e.target.value })}>
+                                {addressOptions.map((address, index) => (
+                                    <option key={index} value={address}>{address}</option>
+                                ))}
+                            </select>
+                        )}
                     </form>
+
                 </div>
                 <div className="column">
                     <h2>2. Your Details</h2>
