@@ -1,6 +1,7 @@
 // CheckoutPage.js
 
 import React, { useState, useRef, useEffect } from 'react';
+import { debounce } from 'lodash';
 import axios from 'axios'; 
 import { useLoadScript } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
@@ -21,9 +22,8 @@ function CheckoutPage() {
     const navigate = useNavigate();
     const deliveryDetailsRef = useRef(deliveryDetails);
 
-    const [addressOptions, setAddressOptions] = useState([]);
-
-    const [postcodeInput, setPostcodeInput] = useState('');
+    const [userInput, setUserInput] = useState(''); // To store user's input for addresses or postcodes
+    const [addressOptions, setAddressOptions] = useState([]); // To store fetched addresses
     
     const [isMounted, setIsMounted] = useState(false);
 
@@ -69,35 +69,44 @@ function CheckoutPage() {
         deliveryDetailsRef.current = deliveryDetails;
     }, [deliveryDetails]);
 
-    useEffect(() => {
-        // Only attempt to fetch addresses if a full, valid postcode is detected
-        const validPostcodePattern = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
-        if (validPostcodePattern.test(postcodeInput)) {
-          fetchAddresses(postcodeInput);
-        }
-    }, [postcodeInput]); // Depend on postcodeInput to re-trigger this effect
-      
+    const debouncedFetchAddresses = debounce((input) => {
+        fetchAddresses(input);
+    }, 500);
+     
 
-
-
-    const fetchAddresses = async (postcodeInput) => {
-        const encodedPostcode = encodeURIComponent(postcodeInput);
-        const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY; 
-        const url = `https://api.getAddress.io/autocomplete/${encodedPostcode}?api-key=${apiKey}`;
-        try {
-            const response = await axios.get(url);
-            console.log("API Response:", response.data); // Debugging 
-            setAddressOptions(response.data.addresses || []); // Adjust according to the API response structure
-        } catch (error) {
-            console.error('Error fetching addresses:', error);
-            setAddressOptions([]); // Clearing addresses in case of error
+    const fetchAddresses = async (input) => {
+        if (/^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(input)) {
+            // Input is a full UK postcode, use getAddress.io to fetch all addresses
+            try {
+                const response = await axios.get(`https://api.getAddress.io/autocomplete/${input}?api-key=${process.env.REACT_APP_GETADDRESS_IO_API_KEY}&all=true`);
+                setAddressOptions(response.data.addresses || []);
+                console.log("API Response:", response.data); // Correctly placed debugging log
+            } catch (error) {
+                console.error('Error fetching addresses:', error);
+                setAddressOptions([]); // Clearing addresses in case of error
+            }
+        } else {
+            // For general address input, use Google Places Autocomplete (handled separately)
         }
     };
     
-    const handleAddressOrPostcodeChange = (e) => {
-        setPostcodeInput(e.target.value);
-    };
     
+    
+    const handleInputChange = (e) => {
+        const input = e.target.value;
+        setUserInput(input); // Update the input value state
+    
+        // Regex to check if input is a UK postcode or starts with numbers followed by letters
+        const postcodeOrAddressPattern = /^(?:(?:[A-Z]{1,2}\d{1,2}[A-Z]?)|(?:\d+[A-Z]))/i;
+        
+        if (postcodeOrAddressPattern.test(input)) {
+            // Debounce the fetchAddresses call to reduce API requests
+            debouncedFetchAddresses(input);
+        } else {
+            // Clear address options if input doesn't match expected patterns
+            setAddressOptions([]);
+        }
+    };
     
 
     const handleFormChange = (event) => {
@@ -126,8 +135,8 @@ function CheckoutPage() {
     if (loadError) {
         return <div>Error loading maps</div>;
     }
-
-
+    
+    console.log(addressOptions); // Debug to see what addresses are available for rendering
     return (
         <div className="checkout-container">
             <h1>Delivery</h1>
@@ -136,14 +145,12 @@ function CheckoutPage() {
                     <h2>1. Delivery</h2>
                     <p>Where would you like your items delivered to?</p>
                     <form onSubmit={handleCheckout}>
-                    <input
-                        type="text"
-                        name="address"
-                        placeholder="Enter your postcode or address"
-                        value={deliveryDetails.address || postcodeInput}
-                        onChange={handleAddressOrPostcodeChange}
-                    />
-
+                        <input
+                            type="text"
+                            value={userInput}
+                            onChange={handleInputChange}
+                            placeholder="Enter your postcode or address"
+                        />                    
                         {addressOptions && addressOptions.length > 0 && (
                             <select onChange={(e) => setDeliveryDetails({ ...deliveryDetails, address: e.target.value })}>
                                 {addressOptions.map((address, index) => (
