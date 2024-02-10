@@ -9,6 +9,24 @@ import './CheckoutPage.css';
 
 const libraries = ["places"];
 
+const debouncedFetchAddresses = debounce(async (input, setOptions) => {
+    const isPostcode = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(input);
+    if (isPostcode) {
+      // Handle full postcode with getAddress.io
+      try {
+        const response = await axios.get(`https://api.getAddress.io/find/${input}?api-key=${process.env.REACT_APP_GETADDRESS_IO_API_KEY}&expand=true`);
+        const addresses = response.data.addresses.map(addr => `${addr.line_1}, ${addr.town}, ${addr.postcode}`);
+        setOptions(addresses);
+      } catch (error) {
+        console.error('Error fetching addresses:', error);
+        setOptions([]);
+      }
+    } else {
+      // Handle partial address input or incomplete postcodes with Google Places (or similar logic)
+      // This portion is typically handled by the Google Places Autocomplete itself, but you could enhance or customize this part as needed.
+    }
+}, 500);
+
 function CheckoutPage() {
     console.log("CheckoutPage is rendering");
     const { isLoaded, loadError } = useLoadScript({
@@ -68,44 +86,11 @@ function CheckoutPage() {
     useEffect(() => {
         deliveryDetailsRef.current = deliveryDetails;
     }, [deliveryDetails]);
-
-    const debouncedFetchAddresses = debounce((input) => {
-        fetchAddresses(input);
-    }, 500);
      
-
-    const fetchAddresses = async (input) => {
-        if (/^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(input)) {
-            // Input is a full UK postcode, use getAddress.io to fetch all addresses
-            try {
-                const response = await axios.get(`https://api.getAddress.io/autocomplete/${input}?api-key=${process.env.REACT_APP_GETADDRESS_IO_API_KEY}&all=true`);
-                setAddressOptions(response.data.addresses || []);
-                console.log("API Response:", response.data); // Correctly placed debugging log
-            } catch (error) {
-                console.error('Error fetching addresses:', error);
-                setAddressOptions([]); // Clearing addresses in case of error
-            }
-        } else {
-            // For general address input, use Google Places Autocomplete (handled separately)
-        }
-    };
-    
-    
-    
     const handleInputChange = (e) => {
         const input = e.target.value;
         setUserInput(input); // Update the input value state
-    
-        // Regex to check if input is a UK postcode or starts with numbers followed by letters
-        const postcodeOrAddressPattern = /^(?:(?:[A-Z]{1,2}\d{1,2}[A-Z]?)|(?:\d+[A-Z]))/i;
-        
-        if (postcodeOrAddressPattern.test(input)) {
-            // Debounce the fetchAddresses call to reduce API requests
-            debouncedFetchAddresses(input);
-        } else {
-            // Clear address options if input doesn't match expected patterns
-            setAddressOptions([]);
-        }
+        debouncedFetchAddresses(input, setAddressOptions); // Pass setAddressOptions to update state directly
     };
     
 
