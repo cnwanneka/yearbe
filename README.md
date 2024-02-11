@@ -2,7 +2,7 @@
 
 Welcome to Yearbe
 
-We have in stock double and single fitted bedsheets.
+We have in stock great quality double and single fitted bedsheets.
 
 100% Polyester.
 
