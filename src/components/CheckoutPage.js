@@ -8,25 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import './CheckoutPage.css';
 
 const libraries = ["places"];
-
-const debouncedFetchAddresses = debounce(async (input, setOptions) => {
-    const isPostcode = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(input);
-    if (isPostcode) {
-      // Handle full postcode with getAddress.io
-      try {
-        const response = await axios.get(`https://api.getAddress.io/find/${input}?api-key=${process.env.REACT_APP_GETADDRESS_IO_API_KEY}&expand=true`);
-        const addresses = response.data.addresses.map(addr => `${addr.line_1}, ${addr.town}, ${addr.postcode}`);
-        setOptions(addresses);
-      } catch (error) {
-        console.error('Error fetching addresses:', error);
-        setOptions([]);
-      }
-    } else {
-      // Handle partial address input or incomplete postcodes with Google Places (or similar logic)
-      // This portion is typically handled by the Google Places Autocomplete itself, but you could enhance or customize this part as needed.
-    }
-}, 500);
-
+  
 function CheckoutPage() {
     console.log("CheckoutPage is rendering");
     const { isLoaded, loadError } = useLoadScript({
@@ -42,6 +24,7 @@ function CheckoutPage() {
 
     const [userInput, setUserInput] = useState(''); // To store user's input for addresses or postcodes
     const [addressOptions, setAddressOptions] = useState([]); // To store fetched addresses
+    const debouncedFetchAddresses = useRef(); // To store the debounced fetch function
     
     const [isMounted, setIsMounted] = useState(false);
 
@@ -86,11 +69,44 @@ function CheckoutPage() {
     useEffect(() => {
         deliveryDetailsRef.current = deliveryDetails;
     }, [deliveryDetails]);
-     
+    
+    const fetchAddresses = async (input) => {
+        const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY;
+        if (!input.trim()) return; // Avoid fetching if input is only whitespace
+        
+        try {
+            // Use encodeURIComponent to handle special characters in input
+            const response = await axios.get(`https://api.getAddress.io/autocomplete/${encodeURIComponent(input)}?api-key=${apiKey}&expand=true`);
+            if (response.data && response.data.suggestions) {
+                const formattedAddresses = response.data.suggestions.map(suggestion => ({
+                    text: suggestion.address, // Format address text as needed
+                    count: suggestion.count || 'N/A' // Use 'count' from your API if available
+                }));
+                setAddressOptions(formattedAddresses);
+            } else {
+                setAddressOptions([]);
+            }
+        } catch (error) {
+            console.error('Error fetching addresses:', error);
+            setAddressOptions([]);
+        }
+    };
+    
+
+    useEffect(() => {
+        debouncedFetchAddresses.current = debounce((input) => {
+            fetchAddresses(input);
+        }, 500);
+
+        return () => {
+            debouncedFetchAddresses.current.cancel();
+        };
+    }, []);
+
     const handleInputChange = (e) => {
         const input = e.target.value;
-        setUserInput(input); // Update the input value state
-        debouncedFetchAddresses(input, setAddressOptions); // Pass setAddressOptions to update state directly
+        setUserInput(input); // Update the input value state immediately
+        debouncedFetchAddresses.current(input); // Use the ref if the debounced function is outside the component
     };
     
 
@@ -120,7 +136,7 @@ function CheckoutPage() {
     if (loadError) {
         return <div>Error loading maps</div>;
     }
-    
+      
     console.log(addressOptions); // Debug to see what addresses are available for rendering
     return (
         <div className="checkout-container">
@@ -135,15 +151,16 @@ function CheckoutPage() {
                             value={userInput}
                             onChange={handleInputChange}
                             placeholder="Enter your postcode or address"
-                        />                    
-                        {addressOptions && addressOptions.length > 0 && (
+                        />
+                        {addressOptions.length > 0 && (
                             <select onChange={(e) => setDeliveryDetails({ ...deliveryDetails, address: e.target.value })}>
-                                {addressOptions.map((address, index) => (
-                                    <option key={index} value={address}>{address}</option>
+                                {addressOptions.map((option, index) => (
+                                    <option key={index} value={option.text}>{`${option.text} - ${option.count} addresses`}</option>
                                 ))}
                             </select>
                         )}
                     </form>
+
 
                 </div>
                 <div className="column">
