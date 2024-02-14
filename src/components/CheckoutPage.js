@@ -70,19 +70,28 @@ function CheckoutPage() {
         deliveryDetailsRef.current = deliveryDetails;
     }, [deliveryDetails]);
     
+
     const fetchAddresses = async (input) => {
         const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY;
-        if (!input.trim()) return; // Avoid fetching if input is only whitespace
-        
+        if (!input.trim()) return;
+    
         try {
-            // Use encodeURIComponent to handle special characters in input
-            const response = await axios.get(`https://api.getAddress.io/autocomplete/${encodeURIComponent(input)}?api-key=${apiKey}&expand=true`);
+            const response = await axios.get(`https://api.getAddress.io/autocomplete/${encodeURIComponent(input)}?api-key=${apiKey}&all=true`);
             if (response.data && response.data.suggestions) {
-                const formattedAddresses = response.data.suggestions.map(suggestion => ({
-                    text: suggestion.address, // Format address text as needed
-                    count: suggestion.count || 'N/A' // Use 'count' from your API if available
-                }));
-                setAddressOptions(formattedAddresses);
+                const validAddresses = response.data.suggestions
+                    .filter(suggestion => suggestion.text && suggestion.text !== 'N/A') // Filter out invalid entries
+                    .map(suggestion => ({
+                        text: suggestion.text,
+                        // Assuming 'count' is meant to indicate the number of detailed entries available for each suggestion
+                        count: suggestion.count || 0 // Use 0 as fallback if 'count' is undefined
+                    }));
+    
+                if (validAddresses.length > 0) {
+                    setAddressOptions(validAddresses);
+                } else {
+                    // Handle the case when there are no valid addresses
+                    setAddressOptions([{ text: "No valid addresses found", count: 0 }]);
+                }
             } else {
                 setAddressOptions([]);
             }
@@ -95,19 +104,33 @@ function CheckoutPage() {
 
     useEffect(() => {
         debouncedFetchAddresses.current = debounce((input) => {
-            fetchAddresses(input);
+            // Only fetch if input matches specific patterns (e.g., contains numbers for postcodes)
+            const hasSignificantCharacter = /[0-9]/.test(input) || // Postcode pattern
+                                            /\d+[a-zA-Z]+/.test(input); // Address pattern
+            if (hasSignificantCharacter) {
+                fetchAddresses(input);
+            }
         }, 500);
 
         return () => {
-            debouncedFetchAddresses.current.cancel();
+            if (debouncedFetchAddresses.current.cancel) {
+                debouncedFetchAddresses.current.cancel();
+            }
         };
     }, []);
 
+    
     const handleInputChange = (e) => {
         const input = e.target.value;
         setUserInput(input); // Update the input value state immediately
-        debouncedFetchAddresses.current(input); // Use the ref if the debounced function is outside the component
+    
+        // Check if input matches the condition for fetching suggestions
+        // Trigger for a postcode or house number followed by an alphabet
+        if (/[0-9]/.test(input) || /[a-zA-Z]/.test(input)) {
+            debouncedFetchAddresses.current(input);
+        }
     };
+    
     
 
     const handleFormChange = (event) => {
@@ -151,11 +174,15 @@ function CheckoutPage() {
                             value={userInput}
                             onChange={handleInputChange}
                             placeholder="Enter your postcode or address"
+                            ref={addressInputRef} // Ensure this is connected to Google Places Autocomplete
                         />
                         {addressOptions.length > 0 && (
                             <select onChange={(e) => setDeliveryDetails({ ...deliveryDetails, address: e.target.value })}>
                                 {addressOptions.map((option, index) => (
-                                    <option key={index} value={option.text}>{`${option.text} - ${option.count} addresses`}</option>
+                                    // Check for the specific "no valid addresses found" message
+                                    option.text === "No valid addresses found" ?
+                                    <option key={index} value="">{option.text}</option> : // If no valid addresses, allow manual input
+                                    <option key={index} value={option.text}>{`${option.text} - ${option.count || '0'} addresses`}</option> // Show valid options
                                 ))}
                             </select>
                         )}
