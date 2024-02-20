@@ -24,6 +24,7 @@ function CheckoutPage() {
 
     const [userInput, setUserInput] = useState(''); // To store user's input for addresses or postcodes
     const [addressOptions, setAddressOptions] = useState([]); // To store fetched addresses
+    const [detailedAddresses, setDetailedAddresses] = useState([]);
     const debouncedFetchAddresses = useRef(); // To store the debounced fetch function
     
     const [isMounted, setIsMounted] = useState(false);
@@ -72,45 +73,54 @@ function CheckoutPage() {
     
 
     const fetchAddresses = async (input) => {
-        const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY;
-        if (!input.trim()) return;
+        if (input.length < 2) return;
     
+        const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY;
         try {
             const response = await axios.get(`https://api.getAddress.io/autocomplete/${encodeURIComponent(input)}?api-key=${apiKey}&all=true`);
             if (response.data && response.data.suggestions) {
-                const validAddresses = response.data.suggestions
-                    .filter(suggestion => suggestion.text && suggestion.text !== 'N/A') // Filter out invalid entries
-                    .map(suggestion => ({
-                        text: suggestion.text,
-                        // Assuming 'count' is meant to indicate the number of detailed entries available for each suggestion
-                        count: suggestion.count || 0 // Use 0 as fallback if 'count' is undefined
-                    }));
-    
-                if (validAddresses.length > 0) {
-                    setAddressOptions(validAddresses);
-                } else {
-                    // Handle the case when there are no valid addresses
-                    setAddressOptions([{ text: "No valid addresses found", count: 0 }]);
-                }
+                const suggestions = response.data.suggestions.map(suggestion => ({
+                    text: suggestion.address, // Response directly gives address text
+                    value: suggestion.url, // Use the 'url' as a unique identifier for the address
+                    id: suggestion.id // Use the 'id' as a unique identifier for the address
+                }));
+                setAddressOptions(suggestions);
             } else {
-                setAddressOptions([]);
+                setAddressOptions([{text: "No results found", value: "", id: ""}]);
             }
         } catch (error) {
             console.error('Error fetching addresses:', error);
-            setAddressOptions([]);
+            setAddressOptions([{text: "Error fetching addresses", value: "", id: ""}]);
         }
     };
     
+    
+    
+    
 
+    const fetchFullAddresses = async (selectedOption) => {
+        const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY;
+        try {
+            const response = await axios.get(`https://api.getAddress.io/autocomplete/${selectedOption}?api-key=${apiKey}&all=true`);
+            if (response.data && response.data.addresses) {
+                setDetailedAddresses(response.data.addresses.map(address => ({
+                    text: address, // Response directly gives address text
+                    value: address // Use address text for value if unique identifier not provided
+                })));
+            } else {
+                setDetailedAddresses([]);
+            }
+        } catch (error) {
+            console.error('Error fetching detailed addresses:', error);
+            setDetailedAddresses([]);
+        }
+    };
+    
+    
     useEffect(() => {
         debouncedFetchAddresses.current = debounce((input) => {
-            // Only fetch if input matches specific patterns (e.g., contains numbers for postcodes)
-            const hasSignificantCharacter = /[0-9]/.test(input) || // Postcode pattern
-                                            /\d+[a-zA-Z]+/.test(input); // Address pattern
-            if (hasSignificantCharacter) {
-                fetchAddresses(input);
-            }
-        }, 500);
+            fetchAddresses(input);
+        }, 300); // Adjust debounce timing as needed
 
         return () => {
             if (debouncedFetchAddresses.current.cancel) {
@@ -119,18 +129,20 @@ function CheckoutPage() {
         };
     }, []);
 
+
+    const handleAddressSelection = async (e) => {
+        const selectedValue = e.target.value;
+        const selectedOption = addressOptions.find(option => option.value === selectedValue);
     
-    const handleInputChange = (e) => {
-        const input = e.target.value;
-        setUserInput(input); // Update the input value state immediately
-    
-        // Check if input matches the condition for fetching suggestions
-        // Trigger for a postcode or house number followed by an alphabet
-        if (/[0-9]/.test(input) || /[a-zA-Z]/.test(input)) {
-            debouncedFetchAddresses.current(input);
+        if (selectedOption && selectedOption.count > 0) {
+            // If a postcode with available addresses is selected, fetch those addresses
+            await fetchFullAddresses(selectedValue);
+        } else {
+            // Directly set the delivery address if a detailed address is selected
+            setDeliveryDetails({ ...deliveryDetails, address: selectedValue });
+            setDetailedAddresses([]); // Clear detailed addresses as they're no longer needed
         }
     };
-    
     
 
     const handleFormChange = (event) => {
@@ -172,22 +184,33 @@ function CheckoutPage() {
                         <input
                             type="text"
                             value={userInput}
-                            onChange={handleInputChange}
+                            onChange={(e) => {
+                                const input = e.target.value;
+                                setUserInput(input);
+                                if (input.length >= 2) {
+                                    debouncedFetchAddresses.current(input);
+                                }
+                            }}
                             placeholder="Enter your postcode or address"
-                            ref={addressInputRef} // Ensure this is connected to Google Places Autocomplete
                         />
+
                         {addressOptions.length > 0 && (
-                            <select onChange={(e) => setDeliveryDetails({ ...deliveryDetails, address: e.target.value })}>
+                            <select onChange={handleAddressSelection} aria-label="Select your address or postcode">
                                 {addressOptions.map((option, index) => (
-                                    // Check for the specific "no valid addresses found" message
-                                    option.text === "No valid addresses found" ?
-                                    <option key={index} value="">{option.text}</option> : // If no valid addresses, allow manual input
-                                    <option key={index} value={option.text}>{`${option.text} - ${option.count || '0'} addresses`}</option> // Show valid options
+                                    <option key={index} value={option.value}>{option.text}</option>
                                 ))}
                             </select>
                         )}
-                    </form>
 
+                        {detailedAddresses.length > 0 && (
+                            <select onChange={handleAddressSelection} aria-label="Select your address">
+                                {addressOptions.map((option, index) => (
+                                    <option key={index} value={option.value}>{option.text}</option>
+                                ))}
+                            </select>
+                    
+                        )}
+                    </form>
 
                 </div>
                 <div className="column">
