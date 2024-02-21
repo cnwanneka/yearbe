@@ -16,61 +16,23 @@ function CheckoutPage() {
         libraries,
     });
     
-    const addressInputRef = useRef(null);
     const [deliveryDetails, setDeliveryDetails] = useState({ address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '' });
-    const [optOut, setOptOut] = useState(false);
-    const navigate = useNavigate();
-    const deliveryDetailsRef = useRef(deliveryDetails);
-
     const [userInput, setUserInput] = useState(''); // To store user's input for addresses or postcodes
     const [addressOptions, setAddressOptions] = useState([]); // To store fetched addresses
-    const [detailedAddresses, setDetailedAddresses] = useState([]);
     const debouncedFetchAddresses = useRef(); // To store the debounced fetch function
-    
-    const [isMounted, setIsMounted] = useState(false);
-
+    const navigate = useNavigate();
 
     useEffect(() => {
-        setIsMounted(true);
-        return () => setIsMounted(false); // Cleanup function
+        debouncedFetchAddresses.current = debounce((input) => {
+            fetchAddresses(input);
+        }, 300); // Adjust debounce timing as needed
+
+        return () => {
+            if (debouncedFetchAddresses.current.cancel) {
+                debouncedFetchAddresses.current.cancel();
+            }
+        };
     }, []);
-
-    useEffect(() => {
-        console.log("Script loaded:", isLoaded);
-        if (isMounted && addressInputRef.current && isLoaded) {
-            console.log("Component mounted and ref is attached:", addressInputRef.current);
-    
-            const autocomplete = new window.google.maps.places.Autocomplete(
-                addressInputRef.current,
-                {
-                    types: ['geocode'], // Focus on address types
-                    componentRestrictions: { country: "GB" } // Restrict to the UK
-                }
-            );
-    
-            const handlePlaceSelect = () => {
-                const place = autocomplete.getPlace();
-                if (!place.geometry) {
-                    console.log('No details available for input:', place.name);
-                    return;
-                }
-                // Update the address in the state
-                setDeliveryDetails({ ...deliveryDetailsRef.current, address: place.formatted_address });
-            };
-
-            autocomplete.addListener('place_changed', handlePlaceSelect);
-
-            // Cleanup function
-            return () => {
-                window.google.maps.event.clearInstanceListeners(autocomplete);
-            };
-        }    
-    }, [isMounted, addressInputRef, isLoaded, setDeliveryDetails]); // Ensure addressInputRef is listed as a dependency if using strict mode
-
-    useEffect(() => {
-        deliveryDetailsRef.current = deliveryDetails;
-    }, [deliveryDetails]);
-    
 
     const fetchAddresses = async (input) => {
         if (input.length < 2) return;
@@ -93,56 +55,17 @@ function CheckoutPage() {
             setAddressOptions([{text: "Error fetching addresses", value: "", id: ""}]);
         }
     };
-    
-    
-    
-    
 
-    const fetchFullAddresses = async (selectedOption) => {
-        const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY;
-        try {
-            const response = await axios.get(`https://api.getAddress.io/autocomplete/${selectedOption}?api-key=${apiKey}&all=true`);
-            if (response.data && response.data.addresses) {
-                setDetailedAddresses(response.data.addresses.map(address => ({
-                    text: address, // Response directly gives address text
-                    value: address // Use address text for value if unique identifier not provided
-                })));
-            } else {
-                setDetailedAddresses([]);
-            }
-        } catch (error) {
-            console.error('Error fetching detailed addresses:', error);
-            setDetailedAddresses([]);
+    
+    const handleAddressSelection = (e) => {
+        const selectedUrl = e.target.value;
+        const selectedOption = addressOptions.find(option => option.value === selectedUrl);
+    
+        if (selectedOption) {
+            setDeliveryDetails({ ...deliveryDetails, address: selectedOption.text });
         }
     };
     
-    
-    useEffect(() => {
-        debouncedFetchAddresses.current = debounce((input) => {
-            fetchAddresses(input);
-        }, 300); // Adjust debounce timing as needed
-
-        return () => {
-            if (debouncedFetchAddresses.current.cancel) {
-                debouncedFetchAddresses.current.cancel();
-            }
-        };
-    }, []);
-
-
-    const handleAddressSelection = async (e) => {
-        const selectedValue = e.target.value;
-        const selectedOption = addressOptions.find(option => option.value === selectedValue);
-    
-        if (selectedOption && selectedOption.count > 0) {
-            // If a postcode with available addresses is selected, fetch those addresses
-            await fetchFullAddresses(selectedValue);
-        } else {
-            // Directly set the delivery address if a detailed address is selected
-            setDeliveryDetails({ ...deliveryDetails, address: selectedValue });
-            setDetailedAddresses([]); // Clear detailed addresses as they're no longer needed
-        }
-    };
     
 
     const handleFormChange = (event) => {
@@ -150,8 +73,14 @@ function CheckoutPage() {
     };
 
     const handleOptOutChange = () => {
-        setOptOut(!optOut);
+        // Correctly toggle the optOut value within the deliveryDetails state
+        setDeliveryDetails(prevDetails => ({
+            ...prevDetails,
+            optOut: !prevDetails.optOut // Correctly toggle the boolean value
+        }));
     };
+    
+
 
     const handleCheckout = (e) => {
         e.preventDefault(); // Prevent default form submission
@@ -173,27 +102,25 @@ function CheckoutPage() {
     }
       
     console.log(addressOptions); // Debug to see what addresses are available for rendering
+    
     return (
         <div className="checkout-container">
             <h1>Delivery</h1>
             <div className="checkout-columns">
                 <div className="column">
                     <h2>1. Delivery</h2>
-                    <p>Where would you like your items delivered to?</p>
                     <form onSubmit={handleCheckout}>
                         <input
                             type="text"
                             value={userInput}
                             onChange={(e) => {
-                                const input = e.target.value;
-                                setUserInput(input);
-                                if (input.length >= 2) {
-                                    debouncedFetchAddresses.current(input);
+                                setUserInput(e.target.value);
+                                if (e.target.value.length >= 2) {
+                                    debouncedFetchAddresses.current(e.target.value);
                                 }
                             }}
                             placeholder="Enter your postcode or address"
                         />
-
                         {addressOptions.length > 0 && (
                             <select onChange={handleAddressSelection} aria-label="Select your address or postcode">
                                 {addressOptions.map((option, index) => (
@@ -201,18 +128,16 @@ function CheckoutPage() {
                                 ))}
                             </select>
                         )}
-
-                        {detailedAddresses.length > 0 && (
-                            <select onChange={handleAddressSelection} aria-label="Select your address">
-                                {addressOptions.map((option, index) => (
-                                    <option key={index} value={option.value}>{option.text}</option>
-                                ))}
-                            </select>
-                    
-                        )}
                     </form>
-
+                    
+                    {deliveryDetails.address && (
+                        <div>
+                            <h3>Delivery Address</h3>
+                            <p>{deliveryDetails.address}</p>
+                        </div>
+                    )}
                 </div>
+            
                 <div className="column">
                     <h2>2. Your Details</h2>
                     <form>
@@ -235,7 +160,11 @@ function CheckoutPage() {
                         <div className="form-row">
                             <input type="email" name="email" placeholder="Email Address" onChange={handleFormChange} />
                         </div>
-                        <input type="checkbox" checked={optOut} onChange={handleOptOutChange} />
+                        <input 
+                            type="checkbox" 
+                            checked={deliveryDetails.optOut} // Correctly reference optOut from deliveryDetails
+                            onChange={handleOptOutChange} 
+                        />
                         <p>We'll stay in touch with offers that you might like, see our privacy policy for details. If you'd prefer we didn't, just opt out by ticking the box.</p>
                         <p>By continuing, I agree to the Terms and Conditions and Privacy Policy
                         </p>
@@ -245,6 +174,7 @@ function CheckoutPage() {
             </div>
         </div>
     );
+    
 }    
 
 export default CheckoutPage;
