@@ -19,6 +19,7 @@ function CheckoutPage() {
     const [deliveryDetails, setDeliveryDetails] = useState({ address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '' });
     const [userInput, setUserInput] = useState(''); // To store user's input for addresses or postcodes
     const [addressOptions, setAddressOptions] = useState([]); // To store fetched addresses
+    const [isManualEntry, setIsManualEntry] = useState(false);
     const debouncedFetchAddresses = useRef(); // To store the debounced fetch function
     const navigate = useNavigate();
 
@@ -55,7 +56,39 @@ function CheckoutPage() {
             setAddressOptions([{text: "Error fetching addresses", value: "", id: ""}]);
         }
     };
+    
+    const isAddressValid = () => {
+        const { addressLine1, townCity, postcode } = deliveryDetails;
+        return addressLine1 && townCity && postcode;
+    };
 
+    const renderManualEntryForm = () => {
+        return (
+            <div className="manual-entry-form">
+                <h2>1. Delivery</h2>
+                <p>Where would you like your items delivered to?</p>
+                <div className="form-field">
+                    <input type="text" name="addressLine1" placeholder="Address Line 1" onChange={(e) => handleFormChange(e, 'addressLine1')} required />
+                </div>
+                <div className="form-field">
+                    <input type="text" name="addressLine2" placeholder="Address Line 2 - Optional" onChange={(e) => handleFormChange(e, 'addressLine2')} />
+                </div>
+                <div className="form-field">
+                    <input type="text" name="addressLine3" placeholder="Address Line 3 - Optional" onChange={(e) => handleFormChange(e, 'addressLine3')} />
+                </div>
+                <div className="form-field">
+                    <input type="text" name="townCity" placeholder="Town or City" onChange={(e) => handleFormChange(e, 'townCity')} required />
+                </div>
+                <div className="form-field">
+                    <input type="text" name="postcode" placeholder="Postcode" onChange={(e) => handleFormChange(e, 'postcode')} required />
+                </div>
+                <div className="form-field">
+                    <button onClick={useManualAddress} disabled={!isAddressValid()}>Use This Address</button>
+                </div>
+            </div>
+        );
+    };
+    
     
     const handleAddressSelection = (e) => {
         const selectedUrl = e.target.value;
@@ -66,11 +99,23 @@ function CheckoutPage() {
         }
     };
     
-    
-
     const handleFormChange = (event) => {
-        setDeliveryDetails({ ...deliveryDetails, [event.target.name]: event.target.value });
+        const { name, value } = event.target;
+        setDeliveryDetails(prevDetails => ({ ...prevDetails, [name]: value }));
+    };    
+    
+    const useManualAddress = () => {
+        // Example validation: Ensure addressLine1, townCity, and postcode are not empty
+        if (deliveryDetails.addressLine1 && deliveryDetails.townCity && deliveryDetails.postcode) {
+            console.log("Using manual address:", deliveryDetails);
+            // Here, you could navigate to the next step, show a confirmation, etc.
+            // For this example, let's just log the address and reset the manual entry mode
+            setIsManualEntry(false);
+        } else {
+            alert("Please fill in all required fields.");
+        }
     };
+    
 
     const handleOptOutChange = () => {
         // Correctly toggle the optOut value within the deliveryDetails state
@@ -107,37 +152,45 @@ function CheckoutPage() {
         <div className="checkout-container">
             <h1>Delivery</h1>
             <div className="checkout-columns">
-                <div className="column">
-                    <h2>1. Delivery</h2>
-                    <form onSubmit={handleCheckout}>
-                        <input
-                            type="text"
-                            value={userInput}
-                            onChange={(e) => {
-                                setUserInput(e.target.value);
-                                if (e.target.value.length >= 2) {
-                                    debouncedFetchAddresses.current(e.target.value);
-                                }
-                            }}
-                            placeholder="Enter your postcode or address"
-                        />
-                        {addressOptions.length > 0 && (
-                            <select onChange={handleAddressSelection} aria-label="Select your address or postcode">
-                                {addressOptions.map((option, index) => (
-                                    <option key={index} value={option.value}>{option.text}</option>
-                                ))}
-                            </select>
-                        )}
-                    </form>
+                {isManualEntry ? renderManualEntryForm() : (   
+                    <div className="column">
+                        <h2>1. Delivery</h2>
+                        <form onSubmit={handleCheckout}>
+                            <input
+                                type="text"
+                                value={userInput}
+                                onChange={(e) => {
+                                    setUserInput(e.target.value);
+                                    if (e.target.value.length >= 2) {
+                                        debouncedFetchAddresses.current(e.target.value);
+                                    }
+                                }}
+                                placeholder="Enter your postcode or address"
+                            />
+                            <button
+                                className="manual-entry-link"
+                                onClick={() => setIsManualEntry(true)}>
+                                
+                                Enter Address Manually
+                            </button>
+
+                            {addressOptions.length > 0 && (
+                                <select onChange={handleAddressSelection} aria-label="Select your address or postcode">
+                                    {addressOptions.map((option, index) => (
+                                        <option key={index} value={option.value}>{option.text}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </form>
                     
-                    {deliveryDetails.address && (
-                        <div>
-                            <h3>Delivery Address</h3>
-                            <p>{deliveryDetails.address}</p>
-                        </div>
-                    )}
-                </div>
-            
+                        {deliveryDetails.address && (
+                            <div>
+                                <h3>Delivery Address</h3>
+                                <p>{deliveryDetails.address}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
                 <div className="column">
                     <h2>2. Your Details</h2>
                     <form>
