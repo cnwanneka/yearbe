@@ -153,7 +153,17 @@ function CheckoutPage() {
         <div className="checkout-container">
             <h1>Delivery</h1>
             <div className="checkout-columns">
-                {isManualEntry ? renderManualEntryForm() : (   
+                {deliveryDetails.address ? (
+                    <div className="column">
+                        <h2>1. Delivery</h2>
+                        <div>
+                            <h3>Delivery Address</h3>
+                            <pre>{deliveryDetails.address}</pre>
+                        </div>
+                    </div>
+                ) : isManualEntry ? (
+                    renderManualEntryForm()
+                ) : (
                     <div className="column">
                         <h2>1. Delivery</h2>
                         <form onSubmit={handleCheckout}>
@@ -170,11 +180,11 @@ function CheckoutPage() {
                             />
                             <button
                                 className="manual-entry-link"
-                                onClick={() => setIsManualEntry(true)}>
-                                
+                                onClick={() => setIsManualEntry(true)}
+                                type="button" // Prevent form submission
+                            >
                                 Enter Address Manually
                             </button>
-
                             {addressOptions.length > 0 && (
                                 <select onChange={handleAddressSelection} aria-label="Select your address or postcode">
                                     {addressOptions.map((option, index) => (
@@ -183,15 +193,9 @@ function CheckoutPage() {
                                 </select>
                             )}
                         </form>
-                    
-                        {deliveryDetails.address && (
-                            <div>
-                                <h3>Delivery Address</h3>
-                                <pre>{deliveryDetails.address}</pre>
-                            </div>
-                        )}
                     </div>
                 )}
+    
                 <div className="column">
                     <h2>2. Your Details</h2>
                     <form>
@@ -227,8 +231,7 @@ function CheckoutPage() {
                 </div>
             </div>
         </div>
-    );
-    
+    );    
 }    
 
 export default CheckoutPage;
