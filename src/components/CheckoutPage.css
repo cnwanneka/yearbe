@@ -99,3 +99,12 @@
 .form-field button:disabled {
     background-color: #ccc; /* Disabled button color */
 }
+
+pre {
+    white-space: pre-wrap; /* Ensure the address wraps and respects spacing */
+    word-wrap: break-word; /* Break the word to prevent overflow */
+    background-color: transparent; /* Optional: Make background transparent */
+    border: none; /* Optional: Remove border */
+    padding: 0; /* Optional: Remove padding */
+    font-family: inherit; /* Match font with the rest of the form */
+}

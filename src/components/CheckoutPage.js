@@ -16,7 +16,11 @@ function CheckoutPage() {
         libraries,
     });
     
-    const [deliveryDetails, setDeliveryDetails] = useState({ address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '' });
+    const [deliveryDetails, setDeliveryDetails] = useState({
+        address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '',
+        addressLine1: '', townCity: '', postcode: '', // Add these fields
+    });
+    
     const [userInput, setUserInput] = useState(''); // To store user's input for addresses or postcodes
     const [addressOptions, setAddressOptions] = useState([]); // To store fetched addresses
     const [isManualEntry, setIsManualEntry] = useState(false);
@@ -105,18 +109,15 @@ function CheckoutPage() {
     };    
     
     const useManualAddress = () => {
-        // Example validation: Ensure addressLine1, townCity, and postcode are not empty
-        if (deliveryDetails.addressLine1 && deliveryDetails.townCity && deliveryDetails.postcode) {
-            console.log("Using manual address:", deliveryDetails);
-            // Here, you could navigate to the next step, show a confirmation, etc.
-            // For this example, let's just log the address and reset the manual entry mode
-            setIsManualEntry(false);
+        if (isAddressValid()) {
+            const formattedAddress = `${deliveryDetails.addressLine1}\n\n${deliveryDetails.townCity.toUpperCase()}\n\n${deliveryDetails.postcode}`;
+            setDeliveryDetails({ ...deliveryDetails, address: formattedAddress });
+            setIsManualEntry(false); // Optionally, navigate to the next step or show confirmation
         } else {
             alert("Please fill in all required fields.");
         }
     };
     
-
     const handleOptOutChange = () => {
         // Correctly toggle the optOut value within the deliveryDetails state
         setDeliveryDetails(prevDetails => ({
@@ -186,7 +187,7 @@ function CheckoutPage() {
                         {deliveryDetails.address && (
                             <div>
                                 <h3>Delivery Address</h3>
-                                <p>{deliveryDetails.address}</p>
+                                <pre>{deliveryDetails.address}</pre>
                             </div>
                         )}
                     </div>
