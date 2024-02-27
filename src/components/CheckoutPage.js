@@ -95,14 +95,26 @@ function CheckoutPage() {
     
     
     const handleAddressSelection = (e) => {
-        const selectedUrl = e.target.value;
-        const selectedOption = addressOptions.find(option => option.value === selectedUrl);
+        const selectedValue = e.target.value;
+        const selectedOption = addressOptions.find(option => option.value === selectedValue);
     
         if (selectedOption) {
-            const formattedAddress = `${selectedOption.text}\n\n${userInput.toUpperCase()}`;
+            // Split the selected address into components
+            let addressComponents = selectedOption.text.split(', ');
+    
+            // Directly use userInput as the postcode, assuming it's the full postcode
+            // This step ensures the full postcode is used
+            const fullPostcode = userInput.toUpperCase(); // Adjust if necessary for format
+    
+            // Append the full postcode to the address components
+            addressComponents.push(fullPostcode);
+    
+            // Join all components with newline characters for display
+            const formattedAddress = addressComponents.join('\n');
             setDeliveryDetails({ ...deliveryDetails, address: formattedAddress });
         }
     };
+    
     
     
     const handleFormChange = (event) => {
@@ -183,7 +195,7 @@ function CheckoutPage() {
                             <button
                                 className="manual-entry-link"
                                 onClick={() => setIsManualEntry(true)}
-                                type="button" // Prevent form submission
+                                type="button" 
                             >
                                 Enter Address Manually
                             </button>
