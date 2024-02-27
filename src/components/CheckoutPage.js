@@ -99,9 +99,11 @@ function CheckoutPage() {
         const selectedOption = addressOptions.find(option => option.value === selectedUrl);
     
         if (selectedOption) {
-            setDeliveryDetails({ ...deliveryDetails, address: selectedOption.text });
+            const formattedAddress = `${selectedOption.text}\n\n${userInput.toUpperCase()}`;
+            setDeliveryDetails({ ...deliveryDetails, address: formattedAddress });
         }
     };
+    
     
     const handleFormChange = (event) => {
         const { name, value } = event.target;
