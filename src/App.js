@@ -8,10 +8,16 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import BasketPage from './components/BasketPage';
 import CheckoutPage from './components/CheckoutPage';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import PaymentPage from './components/PaymentPage';
+import ConfirmationPage from './components/ConfirmationPage';
 import './App.css';
 import { CartProvider } from './components/CartContext';
 import SingleBedsheetDetail from './components/SingleBedsheetDetail';
 import DoubleBedsheetDetail from './components/DoubleBedsheetDetail';
+
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
 
 function App() {
   return (
@@ -28,6 +34,8 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/basket" element={<BasketPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/payment" element={<Elements stripe={stripePromise}><PaymentPage /></Elements>} />
+              <Route path="/confirmation" element={<ConfirmationPage />} />
             </Routes>
           </div>
           <Footer />

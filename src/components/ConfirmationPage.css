@@ -1,0 +1,14 @@
+
+.confirmation-page {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .confirmation-details {
+    margin-top: 20px;
+    text-align: left;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
