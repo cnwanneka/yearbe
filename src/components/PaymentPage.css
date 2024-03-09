@@ -1,4 +1,21 @@
 /* PaymentPage.css */
+.payment-page-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
+    margin: auto;
+}
+
+.billing-address, .payment-form {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.billing-address h2, .payment-form h2 {
+    margin-bottom: 15px;
+}
 
 .payment-form {
     max-width: 500px;

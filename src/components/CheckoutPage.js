@@ -152,7 +152,7 @@ function CheckoutPage() {
         }
 
         // Navigate to a payment page or handle the payment process
-        navigate('/payment'); // Example: navigate to a payment page
+        navigate('/payment', { state: { deliveryDetails } });
     };
 
     if (!isLoaded) return <div>Loading...</div>;

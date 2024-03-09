@@ -1,16 +1,20 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import axios from 'axios';
 import './PaymentPage.css';
 
 function PaymentPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const stripe = useStripe();
     const elements = useElements();
     const [email, setEmail] = useState('');
     const [nameOnCard, setNameOnCard] = useState('');
+
+    // Retrieve delivery details from the location state
+    const deliveryDetails = location.state?.deliveryDetails;
 
     const handlePayment = async (e) => {
         e.preventDefault();
@@ -39,40 +43,50 @@ function PaymentPage() {
             }
         }
     };
-
+    
     return (
-        <div className="payment-form">
-            <p>* indicates a required field</p>
-            <h2>Card Details</h2>
-            <p>Enter your information as it appears on your card. An asterisk(*) denotes a mandatory field.</p>
-            <form onSubmit={handlePayment}>
-                <div className="input-field">
-                    <label htmlFor="nameOnCard" className="required-field">Name on Card</label>
-                    <input
-                        type="text"
-                        id="nameOnCard"
-                        value={nameOnCard}
-                        onChange={(e) => setNameOnCard(e.target.value)}
-                        placeholder="Name on card"
-                        required
-                    />
+        <div className="payment-page-container">
+            {/* Display delivery address if available */}
+            {deliveryDetails && (
+                <div className="billing-address">
+                    <h2>1. Billing Address</h2>
+                    <p>{deliveryDetails.addressLine1}</p>
+                    <p>{deliveryDetails.townCity}</p>
+                    <p>{deliveryDetails.postcode}</p>
+                    <button onClick={() => navigate('/checkout')}>Change</button>
                 </div>
-                <div className="input-field">
-                    <CardElement className="StripeElement" />
-                </div>
-                <div className="input-field">
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email address"
-                        required
-                    />
-                </div>
-                <button type="submit" disabled={!stripe}>
-                    Pay
-                </button>
-            </form>
+            )}
+            <div className="payment-form">
+                <h2>2. Payment Details</h2>
+                <form onSubmit={handlePayment}>
+                    <div className="input-field">
+                        <label htmlFor="nameOnCard" className="required-field">Name on Card</label>
+                        <input
+                            type="text"
+                            id="nameOnCard"
+                            value={nameOnCard}
+                            onChange={(e) => setNameOnCard(e.target.value)}
+                            placeholder="Name on card"
+                            required
+                        />
+                    </div>
+                    <div className="input-field">
+                        <CardElement className="StripeElement" />
+                    </div>
+                    <div className="input-field">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter your email address"
+                            required
+                        />
+                    </div>
+                    <button type="submit" disabled={!stripe}>
+                        Pay
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }
