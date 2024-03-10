@@ -1,14 +1,15 @@
 /* PaymentPage.css */
 .payment-page-container {
     display: flex;
+    justify-content: space-between;
     flex-direction: column;
     max-width: 500px;
     margin: auto;
 }
 
 .billing-address, .payment-form {
-    margin-bottom: 20px;
-    padding: 15px;
+    margin: 1rem;
+    padding: 1rem;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
@@ -93,3 +94,22 @@
     cursor: not-allowed;
 }
 
+.address-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.change-button {
+    margin-left: auto; /* Pushes the button to the right */
+    padding: 8px 16px; /* Example padding, adjust as needed */
+    background-color: #007bff; /* Example background color */
+    color: white; /* Button text color */
+    border: none; /* Remove border */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Cursor indicates clickable button */
+}
+
+.change-button:hover {
+    background-color: #0056b3; /* Darker shade on hover, example */
+}

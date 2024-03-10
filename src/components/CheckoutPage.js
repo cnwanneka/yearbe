@@ -151,8 +151,11 @@ function CheckoutPage() {
             return;
         }
 
+        // Save to local storage
+        localStorage.setItem('deliveryDetails', JSON.stringify(deliveryDetails));
+
         // Navigate to a payment page or handle the payment process
-        navigate('/payment', { state: { deliveryDetails } });
+        navigate('/payment');
     };
 
     if (!isLoaded) return <div>Loading...</div>;
