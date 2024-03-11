@@ -67,8 +67,6 @@ function PaymentPage() {
         navigate('/confirmation');
     };
     
-    
-    
     return (
         <div className="payment-page-container">
             <div className="billing-address">
@@ -77,7 +75,7 @@ function PaymentPage() {
                     {deliveryDetails ? (
                         <>
                             <div className="address-details">
-                                <p>{deliveryDetails.address}</p>
+                                <pre>{deliveryDetails.address}</pre>
                             </div>
                             <button onClick={handleChangeAddress} className="change-button">Change</button>
                         </>
