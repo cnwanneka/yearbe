@@ -19,8 +19,10 @@ function BasketPage() {
 
     const handleCheckout = () => {
         console.log("Proceed to checkout");
-        navigate('/checkout'); // Navigate to the checkout page
+        localStorage.setItem('totalAmount', calculateTotal()); // Store total price
+        navigate('/checkout');
     };
+    
 
 
     return (

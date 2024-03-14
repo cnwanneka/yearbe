@@ -8,7 +8,7 @@ import './PaymentPage.css';
 function PaymentPage() {
     const navigate = useNavigate();
     const [deliveryDetails, setDeliveryDetails] = useState(null);
-    const [amount, setAmount] = useState(); // Example starting amount
+    const [amount, setAmount] = useState(); // Initially undefined
 
     const stripe = useStripe();
     const elements = useElements();
@@ -126,9 +126,10 @@ function PaymentPage() {
                             <CardCvcElement className="StripeElement" options={{ placeholder: "3 digits" }} />
                         </div>
                     </div>
-                    <button type="submit" disabled={!stripe}>
-                        Pay £{amount}
+                    <button type="submit">
+                        Pay £{amount?.toFixed(2)}
                     </button>
+
 
                 </form>
             </div>
