@@ -1,54 +1,78 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, } from 'react-router-dom';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useStripe, useElements, CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js';
 import axios from 'axios';
 import './PaymentPage.css';
 
 function PaymentPage() {
     const navigate = useNavigate();
     const [deliveryDetails, setDeliveryDetails] = useState(null);
+    const [amount, setAmount] = useState(); // Example starting amount
+
     const stripe = useStripe();
     const elements = useElements();
-    const [email, setEmail] = useState('');
-    const [nameOnCard, setNameOnCard] = useState('');
+    
 
     
     useEffect(() => {
-        // Retrieve and parse the delivery details from local storage
+        // Assuming you store the total amount in local storage
+        const total = parseFloat(localStorage.getItem('totalAmount'));
+        if (!isNaN(total)) {
+            setAmount(total);
+        }
+    
+        // Retrieve delivery details
         const storedDetails = JSON.parse(localStorage.getItem('deliveryDetails'));
         if (storedDetails) {
             setDeliveryDetails(storedDetails);
         }
     }, []);
+    
 
     const handlePayment = async (e) => {
         e.preventDefault();
         
-        const { error, paymentMethod } = await stripe.createPaymentMethod({
+        if (!stripe || !elements) {
+            // Stripe.js has not yet loaded.
+            // Make sure to disable form submission until Stripe.js has loaded.
+            console.log('Stripe has not loaded yet!');
+            return;
+        }
+    
+        const cardElement = elements.getElement(CardNumberElement);
+    
+        if (!cardElement) {
+            console.log('CardNumberElement not found');
+            return;
+        }
+    
+        const {error, paymentMethod} = await stripe.createPaymentMethod({
             type: 'card',
-            card: elements.getElement(CardElement),
+            card: cardElement,
         });
-
-        if (!error) {
-            const { id } = paymentMethod;
+    
+        if (error) {
+            console.log('[error]', error);
+            alert('Payment failed: ' + error.message);
+        } else {
             try {
-              const { data } = await axios.post('http://localhost:3001/payment', {
-                token: id,
-                amount: 2000, // For example, $20.00
-                email,
-                orderDetails: {
-                  // Add your order details here
-                },
-              });
-              alert(data.message);
-              handlePaymentSuccess();
+                const { data } = await axios.post('http://localhost:3001/payment', {
+                    token: paymentMethod.id,
+                    amount: amount * 100, // For example, £9.95 becomes 995 in cents
+                    orderDetails: {
+                        // Your order details here
+                    },
+                });
+                alert(data.message);
+                handlePaymentSuccess();
             } catch (error) {
-              console.log(error);
-              alert('Payment failed');
+                console.log(error);
+                alert('Payment failed');
             }
         }
     };
+    
 
 
 
@@ -89,33 +113,26 @@ function PaymentPage() {
                 <h2>2. Payment Details</h2>
                 <form onSubmit={handlePayment}>
                     <div className="input-field">
-                        <label htmlFor="nameOnCard" className="required-field">Name on Card</label>
-                        <input
-                            type="text"
-                            id="nameOnCard"
-                            value={nameOnCard}
-                            onChange={(e) => setNameOnCard(e.target.value)}
-                            placeholder="Name on card"
-                            required
-                        />
+                        <label>Card Number</label>
+                        <CardNumberElement className="StripeElement" options={{ placeholder: "1234 5678 9012 3456" }} />
                     </div>
-                    <div className="input-field">
-                        <CardElement className="StripeElement" />
-                    </div>
-                    <div className="input-field">
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email address"
-                            required
-                        />
+                    <div className="expiry-cvv-field">
+                        <div className="input-field half-width">
+                            <label>Expiry MM/YY</label>
+                            <CardExpiryElement className="StripeElement" options={{ placeholder: "MM/YY" }} />
+                        </div>
+                        <div className="input-field half-width">
+                            <label>CVV</label>
+                            <CardCvcElement className="StripeElement" options={{ placeholder: "3 digits" }} />
+                        </div>
                     </div>
                     <button type="submit" disabled={!stripe}>
-                        Pay
+                        Pay £{amount}
                     </button>
+
                 </form>
             </div>
+
         </div>
     );
 }
