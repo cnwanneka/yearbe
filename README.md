@@ -8,7 +8,6 @@ We have in stock great quality double and single fitted bedsheets.
 
 URL of the website: https://yearbe.com/
 
-https://raw.githubusercontent.com/cnwanneka/yearbe/main/Screenshot%20(71).png
 
 
 
