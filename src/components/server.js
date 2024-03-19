@@ -1,12 +1,15 @@
+
 require('dotenv').config();
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
+const cors = require('cors'); // Require CORS
 
 const app = express();
 const port = 3001; // Can be any port that's free
 
+app.use(cors()); // Use CORS
 app.use(bodyParser.json());
 
 // Route to handle payment
@@ -28,7 +31,6 @@ app.post('/payment', async (req, res) => {
           pass: process.env.GMAIL_PASS,
         },
     });
-      
 
     const mailOptions = {
       from: process.env.GMAIL_USER,
