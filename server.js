@@ -2,58 +2,48 @@
 require('dotenv').config();
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors'); // Require CORS
 
 const app = express();
 const port = 3001; // Can be any port that's free
 
-app.use(cors()); // Use CORS
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  methods: ['POST'], // Only allow POST requests from the specified origin
+  allowedHeaders: ['Content-Type'],
+};
+
+app.use(cors(corsOptions));
+
 app.use(bodyParser.json());
 
 // Route to handle payment
 app.post('/payment', async (req, res) => {
   try {
-    const { amount, token, email, orderDetails } = req.body;
-    const charge = await stripe.charges.create({
-      amount: amount, // amount in pence
+    const { amount, paymentMethodId } = req.body;
+
+    // Define your return URL. This should be a route in your app that can handle the next steps.
+    const return_url = 'http://localhost:3000/payment-success';
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
       currency: 'gbp',
-      source: token, // obtained with Stripe.js
-      description: 'Payment for order',
+      payment_method: paymentMethodId,
+      confirmation_method: 'manual',
+      confirm: true,
+      // Include the return_url in your PaymentIntent creation
+      return_url: return_url,
     });
 
-    // Setup Nodemailer to send an email
-    let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_PASS,
-        },
-    });
-
-    const mailOptions = {
-      from: process.env.GMAIL_USER,
-      to: email,
-      subject: 'Order Confirmation',
-      text: `Thank you. Your card payment was successful. Payment reference: ${charge.id}. Payment Date: ${new Date(charge.created * 1000).toLocaleDateString()}. Paid by: ${charge.billing_details.name}.`,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-        res.status(500).send('Error sending email');
-      } else {
-        console.log('Email sent: ' + info.response);
-        res.json({ message: 'Payment successful, email sent', charge });
-      }
-    });
-
+    res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.log(error);
-    res.status(500).send('Payment failed');
+    console.error("Stripe error:", error); // Detailed log for debugging
+    res.status(500).json({ error: error.message });
   }
 });
+
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

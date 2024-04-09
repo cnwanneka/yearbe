@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useStripe, useElements, CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js';
 import axios from 'axios';
 import './PaymentPage.css';
@@ -8,89 +8,98 @@ import './PaymentPage.css';
 function PaymentPage() {
     const navigate = useNavigate();
     const [deliveryDetails, setDeliveryDetails] = useState(null);
-    const [amount, setAmount] = useState(); // Initially undefined
-
+    const [amount, setAmount] = useState();
+    const [isProcessing, setIsProcessing] = useState(false); // Add this state to track if payment is processing
     const stripe = useStripe();
     const elements = useElements();
-    
 
-    
     useEffect(() => {
-        // Assuming you store the total amount in local storage
         const total = parseFloat(localStorage.getItem('totalAmount'));
         if (!isNaN(total)) {
-            setAmount(total);
+            setAmount(total * 100); // Convert amount to cents
         }
-    
-        // Retrieve delivery details
+
         const storedDetails = JSON.parse(localStorage.getItem('deliveryDetails'));
         if (storedDetails) {
             setDeliveryDetails(storedDetails);
         }
     }, []);
-    
 
     const handlePayment = async (e) => {
         e.preventDefault();
-        
-        if (!stripe || !elements) {
-            // Stripe.js has not yet loaded.
-            // Make sure to disable form submission until Stripe.js has loaded.
-            console.log('Stripe has not loaded yet!');
+        if (!stripe || !elements || isProcessing) { // Check if already processing
             return;
         }
-    
+
+        setIsProcessing(true); // Prevent further submissions
+
         const cardElement = elements.getElement(CardNumberElement);
-    
         if (!cardElement) {
             console.log('CardNumberElement not found');
+            setIsProcessing(false); // Reset processing state
             return;
         }
-    
-        const {error, paymentMethod} = await stripe.createPaymentMethod({
-            type: 'card',
-            card: cardElement,
-        });
-    
-        if (error) {
-            console.log('[error]', error);
-            alert('Payment failed: ' + error.message);
-        } else {
-            try {
-                const { data } = await axios.post('http://localhost:3001/payment', {
-                    token: paymentMethod.id,
-                    amount: amount * 100, // For example, £9.95 becomes 995 in cents
-                    orderDetails: {
-                        // Your order details here
-                    },
-                });
-                alert(data.message);
-                handlePaymentSuccess();
-            } catch (error) {
-                console.log(error);
-                alert('Payment failed');
+
+        try {
+            // Create a payment method
+            const paymentMethodResponse = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+            });
+
+            if (paymentMethodResponse.error) {
+                console.log(paymentMethodResponse.error.message);
+                alert('Payment failed: ' + paymentMethodResponse.error.message);
+                setIsProcessing(false); // Reset processing state
+                return;
             }
+
+            // Now, send the payment method ID to your server
+            const response = await axios.post('http://localhost:3001/payment', {
+                paymentMethodId: paymentMethodResponse.paymentMethod.id,
+                amount: amount,
+            });
+
+            const { clientSecret } = response.data;
+
+            // Confirm the card payment
+            const result = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: paymentMethodResponse.paymentMethod.id,
+            });
+
+            if (result.error) {
+                // Check for the specific Stripe error
+                if (result.error.code === "payment_intent_unexpected_state") {
+                    // Handle as a success or inform the user
+                    navigate('/confirmation');
+                } else {
+                    // Inform the customer that there was an error.
+                    console.error(result.error.message);
+                    alert("Payment error: " + result.error.message);
+                }
+            } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+                // The payment has been processed!
+                alert('Payment successful');
+                handlePaymentSuccess(); // Handle the payment success
+            }
+        } catch (error) {
+            console.log(error);
+            alert('Payment failed');
+        } finally {
+            setIsProcessing(false); // Reset processing state regardless of outcome
         }
     };
-    
-
-
 
     const handleChangeAddress = () => {
-        // Optionally clear or prepare to update local storage
         localStorage.removeItem('deliveryDetails');
-        
         navigate('/checkout');
     };
 
     const handlePaymentSuccess = () => {
-        // Clear delivery details from local storage
         localStorage.removeItem('deliveryDetails');
-    
-        // Navigate to confirmation or another page
         navigate('/confirmation');
     };
-    
+
     return (
         <div className="payment-page-container">
             <div className="billing-address">
@@ -126,16 +135,15 @@ function PaymentPage() {
                             <CardCvcElement className="StripeElement" options={{ placeholder: "3 digits" }} />
                         </div>
                     </div>
-                    <button type="submit">
-                        Pay £{amount?.toFixed(2)}
+                    <button type="submit" disabled={isProcessing}>
+                        {isProcessing ? 'Processing…' : `Pay £${(amount / 100).toFixed(2)}`}
                     </button>
-
-
                 </form>
             </div>
-
         </div>
     );
 }
 
 export default PaymentPage;
+
+

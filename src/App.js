@@ -11,7 +11,8 @@ import CheckoutPage from './components/CheckoutPage';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import PaymentPage from './components/PaymentPage';
-import ConfirmationPage from './components/ConfirmationPage';
+// Import the PaymentSuccess component
+import PaymentSuccess from './components/PaymentSuccess'; // Make sure the path is correct
 import './App.css';
 import { CartProvider } from './components/CartContext';
 import SingleBedsheetDetail from './components/SingleBedsheetDetail';
@@ -35,14 +36,14 @@ function App() {
               <Route path="/basket" element={<BasketPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/payment" element={<Elements stripe={stripePromise}><PaymentPage /></Elements>} />
-              <Route path="/confirmation" element={<ConfirmationPage />} />
+              {/* Update this route to use PaymentSuccess */}
+              <Route path="/confirmation" element={<PaymentSuccess />} />
             </Routes>
           </div>
           <Footer />
         </div>
       </Router>
     </CartProvider>
-
   );
 }
 
