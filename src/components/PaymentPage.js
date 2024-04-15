@@ -26,63 +26,76 @@ function PaymentPage() {
     }, []);
 
     const handlePayment = async (e) => {
-      e.preventDefault();
-      if (!stripe || !elements || isProcessing) {
-          console.log('Payment is already being processed or Stripe is not fully loaded.');
-          return;
-      }
-  
-      setIsProcessing(true);
-  
-      const cardElement = elements.getElement(CardNumberElement);
-      if (!cardElement) {
-          console.log('CardNumberElement not found');
-          setIsProcessing(false);
-          return;
-      }
-  
-      try {
-          const paymentMethodResponse = await stripe.createPaymentMethod({
-              type: 'card',
-              card: cardElement,
-          });
-  
-          if (paymentMethodResponse.error) {
-              console.log(paymentMethodResponse.error.message);
-              alert('Payment failed: ' + paymentMethodResponse.error.message);
-              return;
-          }
-  
-          const response = await axios.post('http://localhost:3001/payment', {
-              paymentMethodId: paymentMethodResponse.paymentMethod.id,
-              amount: amount,
-          });
-  
-          const { clientSecret } = response.data;
-  
-          const result = await stripe.confirmCardPayment(clientSecret, {
-              payment_method: paymentMethodResponse.paymentMethod.id,
-          });
-  
-          if (result.error) {
-              if (result.error.code === "payment_intent_unexpected_state") {
-                  console.log('Payment Intent has already been confirmed.');
-                  navigate('/confirmation');
-              } else {
-                  console.error(result.error.message);
-                  alert("Payment error: " + result.error.message);
-              }
-          } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-              console.log('Payment successful');
-              handlePaymentSuccess();
-          }
-      } catch (error) {
-          console.error(error);
-          alert('Payment processing error');
-      } finally {
-          setIsProcessing(false);
-      }
+        e.preventDefault();
+        if (!stripe || !elements || isProcessing) {
+            console.log('Stripe not ready or payment is processing');
+            return;
+        }
+    
+        setIsProcessing(true);
+    
+        const cardElement = elements.getElement(CardNumberElement);
+        if (!cardElement) {
+            console.log('Card details not found');
+            setIsProcessing(false);
+            return;
+        }
+    
+        try {
+            const paymentMethodResponse = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+            });
+    
+            if (paymentMethodResponse.error) {
+                console.log(paymentMethodResponse.error.message);
+                alert('Payment failed: ' + paymentMethodResponse.error.message);
+                setIsProcessing(false);
+                return;
+            }
+    
+            const response = await axios.post('http://localhost:3001/payment', {
+                paymentMethodId: paymentMethodResponse.paymentMethod.id,
+                amount: amount,
+            });
+    
+            if (response.data.error) {
+                console.error('Server error:', response.data.error);
+                alert('Payment processing error: ' + response.data.error);
+                setIsProcessing(false);
+                return;
+            }
+    
+            const { clientSecret } = response.data;
+    
+            // Check the status of the PaymentIntent before confirming
+            const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+            if (paymentIntent.status === 'succeeded') {
+                console.log('Payment already succeeded');
+                handlePaymentSuccess();
+                return;
+            }
+    
+            const result = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: paymentMethodResponse.paymentMethod.id,
+            });
+    
+            if (result.error) {
+                console.error(result.error.message);
+                alert("Payment error: " + result.error.message);
+                return;
+            } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+                console.log('Payment successful');
+                handlePaymentSuccess();
+            }
+        } catch (error) {
+            console.error('Error in payment processing:', error);
+            alert('Payment processing error');
+        } finally {
+            setIsProcessing(false);
+        }
     };
+    
   
 
     const handleChangeAddress = () => {
