@@ -144,19 +144,20 @@ function CheckoutPage() {
 
     const handleCheckout = (e) => {
         e.preventDefault(); // Prevent default form submission
-        // add logic for proceeding to the payment step
     
-        if (!deliveryDetails.address || !deliveryDetails.firstName || !deliveryDetails.lastName) {
+        // Check for empty required fields including the email
+        if (!deliveryDetails.address || !deliveryDetails.firstName || !deliveryDetails.lastName || !deliveryDetails.email) {
             alert("Please fill in all required fields.");
             return;
         }
-
+    
         // Save to local storage
         localStorage.setItem('deliveryDetails', JSON.stringify(deliveryDetails));
-
+    
         // Navigate to a payment page or handle the payment process
         navigate('/payment');
     };
+    
 
     if (!isLoaded) return <div>Loading...</div>;
 

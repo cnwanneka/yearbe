@@ -17,6 +17,37 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
+const nodemailer = require('nodemailer');
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS
+    }
+});
+
+// Function to send an email
+const sendConfirmationEmail = (to, subject, text, html) => {
+    const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: to,
+        subject: subject,
+        text: text,
+        html: html
+    };
+
+    transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log('Error sending email: ', error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+};
+
+
 // Route to handle payment
 app.post('/payment', async (req, res) => {
     try {
@@ -24,17 +55,13 @@ app.post('/payment', async (req, res) => {
 
         let paymentIntent;
         if (paymentIntentId) {
-            // Attempt to retrieve an existing PaymentIntent
             paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-            // Check if the retrieved PaymentIntent has already succeeded
             if (paymentIntent.status === 'succeeded') {
                 console.log(`PaymentIntent ${paymentIntent.id} has already succeeded.`);
                 return res.status(400).json({ error: "PaymentIntent already succeeded" });
             }
         }
 
-        // Proceed with creating a new PaymentIntent if none exists or if the existing one has not succeeded
         if (!paymentIntent) {
             paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
@@ -42,17 +69,28 @@ app.post('/payment', async (req, res) => {
                 payment_method: paymentMethodId,
                 confirmation_method: 'manual',
                 confirm: true,
-                // Include the return_url in your PaymentIntent creation
                 return_url: 'http://localhost:3000/payment-success',
             });
         }
 
-        res.json({ clientSecret: paymentIntent.client_secret });
+        // Check the payment status
+        if (paymentIntent.status === 'succeeded') {
+            // Send confirmation email
+            const emailBody = `<h1>Order Confirmation</h1><p>Your payment of £${(amount / 100).toFixed(2)} has been successful.</p><p>Thank you for your purchase!</p>`;
+            sendConfirmationEmail('customer@example.com', 'Your Order Confirmation', '', emailBody);
+
+            console.log('Payment successful');
+            res.json({ clientSecret: paymentIntent.client_secret });
+        } else {
+            res.json({ clientSecret: paymentIntent.client_secret });
+        }
+
     } catch (error) {
-        console.error("Stripe error:", error); // Detailed log for debugging
+        console.error("Stripe error:", error);
         res.status(500).json({ error: error.message });
     }
 });
+
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
