@@ -3,21 +3,20 @@ require('dotenv').config();
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
-const cors = require('cors'); // Require CORS
+const cors = require('cors'); 
+const nodemailer = require('nodemailer');
 
 const app = express();
-const port = 3001; // Can be any port that's free
+const port = 3001;
 
 const corsOptions = {
     origin: 'http://localhost:3000',
-    methods: ['POST'], // Only allow POST requests from the specified origin
+    methods: ['POST'],
     allowedHeaders: ['Content-Type'],
 };
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-
-const nodemailer = require('nodemailer');
 
 // Email configuration
 const transporter = nodemailer.createTransport({
@@ -47,11 +46,14 @@ const sendConfirmationEmail = (to, subject, text, html) => {
     });
 };
 
-
 // Route to handle payment
 app.post('/payment', async (req, res) => {
     try {
-        const { amount, paymentMethodId, paymentIntentId } = req.body;
+        const { amount, paymentMethodId, paymentIntentId, deliveryDetails, cart } = req.body;
+
+        if (!deliveryDetails || !cart) {
+            throw new Error('Delivery details or cart is missing.');
+        }
 
         let paymentIntent;
         if (paymentIntentId) {
@@ -73,16 +75,21 @@ app.post('/payment', async (req, res) => {
             });
         }
 
-        // Check the payment status
         if (paymentIntent.status === 'succeeded') {
-            // Send confirmation email
-            const emailBody = `<h1>Order Confirmation</h1><p>Your payment of £${(amount / 100).toFixed(2)} has been successful.</p><p>Thank you for your purchase!</p>`;
-            sendConfirmationEmail('customer@example.com', 'Your Order Confirmation', '', emailBody);
+            const emailBody = `
+                <h1>Order Confirmation</h1>
+                <p>Your payment of £${(amount / 100).toFixed(2)} has been successful.</p>
+                <p>Order Details:</p>
+                <ul>
+                    ${cart.map(item => `<li>${item.title} - £${item.price} x ${item.quantity}</li>`).join('')}
+                </ul>
+                <p>Delivery Address: ${deliveryDetails.address}</p>
+                <p>Thank you for your purchase!</p>`;
+            sendConfirmationEmail(deliveryDetails.email, 'Your Order Confirmation', '', emailBody);
 
-            console.log('Payment successful');
-            res.json({ clientSecret: paymentIntent.client_secret });
+            return res.json({ clientSecret: paymentIntent.client_secret });
         } else {
-            res.json({ clientSecret: paymentIntent.client_secret });
+            return res.json({ clientSecret: paymentIntent.client_secret });
         }
 
     } catch (error) {
@@ -91,7 +98,8 @@ app.post('/payment', async (req, res) => {
     }
 });
 
-
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
+
+

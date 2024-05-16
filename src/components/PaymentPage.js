@@ -9,6 +9,7 @@ function PaymentPage() {
     const navigate = useNavigate();
     const [deliveryDetails, setDeliveryDetails] = useState(null);
     const [amount, setAmount] = useState();
+    const [cart, setCart] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false); // State to track if payment is processing
     const stripe = useStripe();
     const elements = useElements();
@@ -22,6 +23,11 @@ function PaymentPage() {
         const storedDetails = JSON.parse(localStorage.getItem('deliveryDetails'));
         if (storedDetails) {
             setDeliveryDetails(storedDetails);
+        }
+
+        const storedCart = JSON.parse(localStorage.getItem('cart'));
+        if (storedCart) {
+            setCart(storedCart);
         }
     }, []);
 
@@ -57,6 +63,8 @@ function PaymentPage() {
             const response = await axios.post('http://localhost:3001/payment', {
                 paymentMethodId: paymentMethodResponse.paymentMethod.id,
                 amount: amount,
+                deliveryDetails: deliveryDetails,
+                cart: cart,
             });
     
             if (response.data.error) {
@@ -95,8 +103,6 @@ function PaymentPage() {
             setIsProcessing(false);
         }
     };
-    
-  
 
     const handleChangeAddress = () => {
         localStorage.removeItem('deliveryDetails');
@@ -105,6 +111,7 @@ function PaymentPage() {
 
     const handlePaymentSuccess = () => {
         localStorage.removeItem('deliveryDetails');
+        localStorage.removeItem('cart');
         navigate('/confirmation');
     };
 
@@ -153,5 +160,6 @@ function PaymentPage() {
 }
 
 export default PaymentPage;
+
 
 
