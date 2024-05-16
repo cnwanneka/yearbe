@@ -1,26 +1,27 @@
-// CheckoutPage.js
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { debounce } from 'lodash';
 import axios from 'axios'; 
 import { useLoadScript } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
+import { CartContext } from './CartContext'; // Import CartContext
 import './CheckoutPage.css';
 
 const libraries = ["places"];
-  
+
 function CheckoutPage() {
     console.log("CheckoutPage is rendering");
+    const { cart } = useContext(CartContext); // Get cart from context
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
         libraries,
     });
-    
+
     const [deliveryDetails, setDeliveryDetails] = useState({
         address: '', title: 'Mrs', firstName: '', lastName: '', mobile: '', email: '',
         addressLine1: '', townCity: '', postcode: '', // Add these fields
     });
-    
+
     const [userInput, setUserInput] = useState(''); // To store user's input for addresses or postcodes
     const [addressOptions, setAddressOptions] = useState([]); // To store fetched addresses
     const [isManualEntry, setIsManualEntry] = useState(false);
@@ -41,7 +42,7 @@ function CheckoutPage() {
 
     const fetchAddresses = async (input) => {
         if (input.length < 2) return;
-    
+
         const apiKey = process.env.REACT_APP_GETADDRESS_IO_API_KEY;
         try {
             const response = await axios.get(`https://api.getAddress.io/autocomplete/${encodeURIComponent(input)}?api-key=${apiKey}&all=true`);
@@ -60,7 +61,7 @@ function CheckoutPage() {
             setAddressOptions([{text: "Error fetching addresses", value: "", id: ""}]);
         }
     };
-    
+
     const isAddressValid = () => {
         const { addressLine1, townCity, postcode } = deliveryDetails;
         return addressLine1 && townCity && postcode;
@@ -92,36 +93,35 @@ function CheckoutPage() {
             </div>
         );
     };
-    
-    
+
     const handleAddressSelection = (e) => {
         const selectedValue = e.target.value;
         const selectedOption = addressOptions.find(option => option.value === selectedValue);
-    
+
         if (selectedOption) {
             // Split the selected address into components
-            let addressComponents = selectedOption.text.split(', ');
-    
+            let addressComponents = selectedOption.text.split(', ').map(component => component.toUpperCase());
+
             // Directly use userInput as the postcode, assuming it's the full postcode
-            // This step ensures the full postcode is used
-            const fullPostcode = userInput.toUpperCase(); // Adjust if necessary for format
-    
-            // Append the full postcode to the address components
-            addressComponents.push(fullPostcode);
-    
+            const fullPostcode = userInput.trim().toUpperCase();
+
+            // Check if the postcode is already in the address components
+            if (!addressComponents.includes(fullPostcode)) {
+                // Append the full postcode to the address components if not already included
+                addressComponents.push(fullPostcode);
+            }
+
             // Join all components with newline characters for display
             const formattedAddress = addressComponents.join('\n');
             setDeliveryDetails({ ...deliveryDetails, address: formattedAddress });
         }
     };
-    
-    
-    
+
     const handleFormChange = (event) => {
         const { name, value } = event.target;
         setDeliveryDetails(prevDetails => ({ ...prevDetails, [name]: value }));
-    };    
-    
+    };
+
     const useManualAddress = () => {
         if (isAddressValid()) {
             const formattedAddress = `${deliveryDetails.addressLine1}\n\n${deliveryDetails.townCity.toUpperCase()}\n\n${deliveryDetails.postcode}`;
@@ -131,7 +131,7 @@ function CheckoutPage() {
             alert("Please fill in all required fields.");
         }
     };
-    
+
     const handleOptOutChange = () => {
         // Correctly toggle the optOut value within the deliveryDetails state
         setDeliveryDetails(prevDetails => ({
@@ -139,34 +139,31 @@ function CheckoutPage() {
             optOut: !prevDetails.optOut // Correctly toggle the boolean value
         }));
     };
-    
-
 
     const handleCheckout = (e) => {
-        e.preventDefault(); // Prevent default form submission
-    
-        // Check for empty required fields including the email
+        e.preventDefault();
+
         if (!deliveryDetails.address || !deliveryDetails.firstName || !deliveryDetails.lastName || !deliveryDetails.email) {
             alert("Please fill in all required fields.");
             return;
         }
-    
-        // Save to local storage
+
+        // Save delivery details and cart details to local storage
         localStorage.setItem('deliveryDetails', JSON.stringify(deliveryDetails));
-    
-        // Navigate to a payment page or handle the payment process
+        localStorage.setItem('cart', JSON.stringify(cart)); // Save cart items
+
+        // Navigate to payment page
         navigate('/payment');
     };
-    
 
     if (!isLoaded) return <div>Loading...</div>;
 
     if (loadError) {
         return <div>Error loading maps</div>;
     }
-      
+
     console.log(addressOptions); // Debug to see what addresses are available for rendering
-    
+
     return (
         <div className="checkout-container">
             <h1>Delivery</h1>
@@ -199,7 +196,7 @@ function CheckoutPage() {
                             <button
                                 className="manual-entry-link"
                                 onClick={() => setIsManualEntry(true)}
-                                type="button" 
+                                type="button"
                             >
                                 Enter Address Manually
                             </button>
@@ -213,7 +210,7 @@ function CheckoutPage() {
                         </form>
                     </div>
                 )}
-    
+
                 <div className="column">
                     <h2>2. Your Details</h2>
                     <form>
@@ -236,10 +233,10 @@ function CheckoutPage() {
                         <div className="form-row">
                             <input type="email" name="email" placeholder="Email Address" onChange={handleFormChange} />
                         </div>
-                        <input 
-                            type="checkbox" 
+                        <input
+                            type="checkbox"
                             checked={deliveryDetails.optOut} // Correctly reference optOut from deliveryDetails
-                            onChange={handleOptOutChange} 
+                            onChange={handleOptOutChange}
                         />
                         <p>We'll stay in touch with offers that you might like, see our privacy policy for details. If you'd prefer we didn't, just opt out by ticking the box.</p>
                         <p>By continuing, I agree to the Terms and Conditions and Privacy Policy
@@ -249,10 +246,11 @@ function CheckoutPage() {
                 </div>
             </div>
         </div>
-    );    
-}    
+    );
+}
 
 export default CheckoutPage;
+
 
 
 
