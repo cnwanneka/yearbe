@@ -10,7 +10,7 @@ const app = express();
 const port = 3001;
 
 const corsOptions = {
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'https://yearbe.com'],
     methods: ['POST'],
     allowedHeaders: ['Content-Type'],
 };
@@ -71,7 +71,7 @@ app.post('/payment', async (req, res) => {
                 payment_method: paymentMethodId,
                 confirmation_method: 'manual',
                 confirm: true,
-                return_url: 'http://localhost:3000/payment-success',
+                return_url: 'https://yearbe.com/payment-success',
             });
         }
 
@@ -101,5 +101,6 @@ app.post('/payment', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
+
 
 
