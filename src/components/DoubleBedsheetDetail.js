@@ -9,7 +9,7 @@ function DoubleBedsheetDetail() {
             <h1>White Fitted Double Bedsheet - Luxurious Comfort</h1>
             <img src={DoubleBedsheetImage} alt="Luxurious white fitted double bedsheet" />
             <h2>Detailed Description</h2>
-            <p>Experience the ultimate comfort with our high-quality, white fitted double bedsheets. Designed for both style and durability, these bedsheets are a perfect addition to any bedroom.</p>
+            <p>Experience the ultimate comfort with our high-quality, white fitted double bedsheets. Designed for both style and durability, these bedsheets offer superior comfort, durability, attractive designs and hypoallergenic materials.</p>
         </div>
     );
 }
