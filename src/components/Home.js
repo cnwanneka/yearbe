@@ -13,14 +13,14 @@ function Home() {
             <div className="products-container">
                 <Product 
                   title="White Fitted Double Bedsheet" 
-                  price="9.99" 
+                  price="8.99" 
                   description="High-quality double bedsheet" 
                   imageUrl={DoubleBedsheetImage}
                   detailPath="/double-bedsheet"
                 />
                 <Product 
                   title="White Fitted Single Bedsheet" 
-                  price="7.99" 
+                  price="6.99" 
                   description="Comfortable single bedsheet" 
                   imageUrl={SingleBedsheetImage}
                   detailPath="/single-bedsheet"
