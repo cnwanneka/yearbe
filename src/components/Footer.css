@@ -1,19 +1,73 @@
 
-/* Footer.css */
 .footer {
-    background-color: grey;
-    text-align: center;
-    padding: 20px 0;
-  }
-  
-  .footer-content {
-    max-width: 1140px;
-    margin: auto;
-    padding: 0 15px;
-  }
-  
-  .footer a {
-    color: green;
-    text-decoration: none;
-  }
-  
+  background-color: #f8f8f8;
+  padding: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  color: #333;
+  border-top: 1px solid #ddd;
+}
+
+.footer a {
+  color: #0073e6;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* Return Policy Styling */
+.return-policy {
+  margin-top: 20px;
+  text-align: left;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.return-policy summary {
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  outline: none;
+  padding: 5px 0;
+  list-style: none;
+}
+
+.return-policy summary::-webkit-details-marker {
+  display: none; 
+}
+
+.return-policy summary:after {
+  content: " +";
+  float: right;
+  font-weight: normal;
+  transition: transform 0.3s ease;
+}
+
+.return-policy[open] summary:after {
+  content: " –";
+}
+
+.return-policy div {
+  padding-top: 10px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  animation: fadeIn 0.3s ease;
+}
+
+.return-policy ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

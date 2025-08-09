@@ -5,13 +5,23 @@ function About() {
   return (
     <div>
       <h1>About Us</h1>
-      <p>At Yearbe Ltd., we pride ourselves on delivering high-quality bedding solutions that blend elegance with practicality. Since our founding in 2019, we've been dedicated to providing premium fitted bedsheets that meet the needs of comfort, durability, and style for everyday use.
+      <p>About Yearbe Ltd.
+        At Yearbe Ltd., we create premium white fitted sheets that blend elegance, comfort, and durability. Since 2019, we’ve focused on what matters most in bedding: a perfect fit, a soft feel, and long-lasting quality you can trust.
+        Our collection includes single and double white fitted bedsheets, carefully crafted from high-quality, hypoallergenic materials. Each sheet is designed to stay snug, feel buttery-soft, and stand up to everyday use—so your bed looks crisp and feels luxurious night after night.
+        Single White Fitted Sheets: Seamless balance of practicality and comfort for daily use—soft, breathable, and durable.
+        Double White Fitted Sheets: Perfect-fit elastic, irritation-free materials ideal for sensitive skin, and built for longevity.
+        With a clean, timeless aesthetic, our sheets elevate any bedroom while delivering the comfort and reliability you expect. At Yearbe, we’re committed to making your home feel more luxurious and comfortable with every sleep.
 
-Our product range includes both single and double white fitted bedsheets, meticulously crafted from the finest materials. Our white fitted single bedsheets seamlessly combine elegance with functionality, offering unmatched comfort and durability. Ideal for daily use, these sheets ensure your bed not only looks great but also provides a soft, cozy feel for a restful night’s sleep.
+        Why Yearbe
 
-For those seeking an elevated sleep experience, our premium white fitted double bedsheets are expertly crafted to provide a perfect fit and long-lasting durability. Made from hypoallergenic materials, they ensure a comfortable, irritation-free sleep, ideal for sensitive skin. With a focus on both design and practicality, these bedsheets offer an ideal blend of softness, strength, and effortless elegance that enhances any bedroom.
+        Premium, hypoallergenic materials
 
-At Yearbe Ltd., we are committed to creating products that transform your bedding experience, making your home feel more luxurious and comfortable with every use.</p>
+        Snug, stay-put fit and easy care
+
+        Softness + strength for everyday use
+
+        UK brand, founded 2019
+      </p>
       
     </div>
   );
