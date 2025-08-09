@@ -5,7 +5,7 @@ function About() {
   return (
     <div>
       <h1>About Us</h1>
-      <p>About Yearbe Ltd.
+      <p>
         At Yearbe Ltd., we create premium white fitted sheets that blend elegance, comfort, and durability. Since 2019, we’ve focused on what matters most in bedding: a perfect fit, a soft feel, and long-lasting quality you can trust.
         Our collection includes single and double white fitted bedsheets, carefully crafted from high-quality, hypoallergenic materials. Each sheet is designed to stay snug, feel buttery-soft, and stand up to everyday use—so your bed looks crisp and feels luxurious night after night.
         Single White Fitted Sheets: Seamless balance of practicality and comfort for daily use—soft, breathable, and durable.
