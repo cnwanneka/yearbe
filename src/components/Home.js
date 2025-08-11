@@ -14,7 +14,7 @@ function Home() {
                 <Product 
                   title="White Fitted Double Bedsheet" 
                   price="5.99" 
-                  description="High-quality double bedsheet" 
+                  description="High quality double bedsheet" 
                   imageUrl={DoubleBedsheetImage}
                   detailPath="/double-bedsheet"
                 />
