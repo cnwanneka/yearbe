@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Home from './components/Home';
 import About from './components/About';
 import Contact from './components/Contact'; 
+import ReturnPolicy from "./components/ReturnPolicy"; 
 import Footer from './components/Footer';
 import BasketPage from './components/BasketPage';
 import CheckoutPage from './components/CheckoutPage';
@@ -33,6 +34,7 @@ function App() {
               <Route path="/single-bedsheet" element={<SingleBedsheetDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/returns" element={<ReturnPolicy />} />
               <Route path="/basket" element={<BasketPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/payment" element={<Elements stripe={stripePromise}><PaymentPage /></Elements>} />
