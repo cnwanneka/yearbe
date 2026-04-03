@@ -1,40 +1,126 @@
 
 .home-container {
-    text-align: center;
-  }
-  
-  .products-container {
-    display: flex;
-    justify-content: center;
-    gap: 20px;  /* Spacing between cards */
-    padding: 20px;
-  }
-  
-  /* Style for individual Product components (cards) */
-  .product {  
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    padding: 20px;
-    width: 300px; /* or any other fixed width */
-    text-align: left;
-  }
+  text-align: center;
+  padding: 20px;
+}
 
-  @media (max-width: 600px) {  /* Adjust breakpoint as needed */
-    .products-container {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
+.live-feed-section {
+  max-width: 900px;
+  margin: 30px auto 40px;
+  padding: 0 15px;
+}
 
+.live-feed-title {
+  font-size: 1.8rem;
+  margin-bottom: 18px;
+  color: #222;
+}
+
+.video-card {
+  max-width: 820px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: #000;
+}
+
+.video-thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+}
+
+.video-thumbnail {
+  width: 100%;
+  display: block;
+  height: auto;
+}
+
+.play-button-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  transition: background 0.3s ease;
+}
+
+.video-thumbnail-wrapper:hover .play-button-overlay {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.play-button {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: rgba(255, 0, 0, 0.9);
+  color: #fff;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 20px;
+}
+
+.products-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+
+/* Style for individual Product components (cards) */
+.product {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  width: 300px;
+  text-align: left;
+}
 
 .product-link {
   text-decoration: none;
-  color: inherit; /* To ensure text color is not affected by link */
+  color: inherit;
 }
 
 .product-link:hover {
   cursor: pointer;
 }
 
-  
+@media (max-width: 600px) {
+  .products-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .live-feed-title {
+    font-size: 1.4rem;
+  }
+
+  .play-button {
+    width: 64px;
+    height: 64px;
+    font-size: 1.6rem;
+  }
+}
