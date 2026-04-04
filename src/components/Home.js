@@ -9,7 +9,7 @@ import SingleBedsheetImage from '../images/single-bedsheet.jpg';
 function Home() {
   const [playVideo, setPlayVideo] = useState(false);
 
-  const videoId = '6RwfNBtepa4';
+  const videoId = 'm3kR2KK8TEs';
   const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
   const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
 
