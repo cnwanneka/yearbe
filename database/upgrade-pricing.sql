@@ -1,0 +1,4 @@
+
+ALTER TABLE cj_variants
+ADD COLUMN IF NOT EXISTS usd_to_gbp_rate NUMERIC(18,10),
+ADD COLUMN IF NOT EXISTS cost_gbp_updated_at TIMESTAMPTZ;

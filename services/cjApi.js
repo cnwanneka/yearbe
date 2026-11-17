@@ -48,15 +48,29 @@ async function getAccessToken() {
   return accessToken;
 }
 
-async function cjRequest(endpoint) {
+async function cjRequest(
+  endpoint,
+  method = "GET",
+  body = null
+) {
   const token = await getAccessToken();
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: "GET",
+  const options = {
+    method,
     headers: {
-      "CJ-Access-Token": token
+      "CJ-Access-Token": token,
+      "Content-Type": "application/json"
     }
-  });
+  };
+
+  if (body !== null) {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(
+    `${BASE_URL}${endpoint}`,
+    options
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -66,7 +80,10 @@ async function cjRequest(endpoint) {
 
   const result = await response.json();
 
-  if (!result.result) {
+  if (
+    result.result !== true &&
+    !(result.result == null && result.success === true)
+  ) {
     throw new Error(
       result.message || "CJ request failed"
     );
@@ -74,6 +91,7 @@ async function cjRequest(endpoint) {
 
   return result.data;
 }
+
 
 module.exports = {
   getAccessToken,
