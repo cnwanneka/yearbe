@@ -5,18 +5,27 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const cors = require('cors'); 
 const nodemailer = require('nodemailer');
+const cjCatalogue = require("./routes/cjCatalogue");
 
 const app = express();
 const port = 3001;
 
 const corsOptions = {
     origin: ['http://localhost:3000', 'https://yearbe.com'],
-    methods: ['POST'],
+    methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
 };
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+
+if (
+  process.env.NODE_ENV !== "production" &&
+  process.env.YEARBE_CATALOGUE_PREVIEW === "1"
+) {
+  app.use("/api/cj", cjCatalogue);
+}
+
 
 // Email configuration
 const transporter = nodemailer.createTransport({

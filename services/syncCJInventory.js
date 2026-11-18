@@ -2,7 +2,16 @@
 const pool = require("../database/db");
 const { cjRequest } = require("./cjApi");
 
-const BATCH_SIZE = 15;
+const BATCH_SIZE = Math.min(
+  300,
+  Math.max(
+    1,
+    parseInt(
+      process.env.CJ_INVENTORY_BATCH_SIZE || "20",
+      10
+    ) || 20
+  )
+);
 
 const sleep = (ms) =>
   new Promise(resolve => setTimeout(resolve, ms));
@@ -31,23 +40,55 @@ function sumStock(rows, field) {
 
 async function syncCJInventory() {
   let completed = 0;
+  let lockClient;
 
   try {
+    // Prevent overlapping CJ synchronisation tasks
+    lockClient = await pool.connect();
+
+    const lock = await lockClient.query(
+      "SELECT pg_try_advisory_lock(81001) AS locked"
+    );
+
+    if (!lock.rows[0].locked) {
+      throw new Error(
+        "Another CJ synchronisation is already running"
+      );
+    }
+
+    // Retrieve products awaiting inventory synchronisation
+    
     const result = await pool.query(`
-      SELECT id, cj_product_id, name
+      SELECT id, cj_product_id, name,
+             inventory_synced_at
       FROM cj_products
       WHERE variants_synced_at IS NOT NULL
-        AND inventory_synced_at IS NULL
-      ORDER BY id
+        AND (
+          inventory_synced_at IS NULL
+          OR inventory_synced_at <=
+             NOW() - INTERVAL '24 hours'
+        )
+      ORDER BY
+        COALESCE(
+          inventory_synced_at,
+          variants_synced_at
+        ) ASC,
+        id ASC
       LIMIT $1
     `, [BATCH_SIZE]);
+
 
     console.log(
       `Products to check: ${result.rows.length}`
     );
 
     for (const product of result.rows) {
-      console.log("Checking:", product.name);
+      console.log(
+        product.inventory_synced_at
+          ? "Refreshing stock:"
+          : "Checking new inventory:",
+        product.name
+      );
 
       const data = await cjRequest(
         `/product/stock/getInventoryByPid?pid=${
@@ -133,6 +174,7 @@ async function syncCJInventory() {
         client.release();
       }
 
+      // Conservative spacing for CJ API requests
       await sleep(1500);
     }
 
@@ -143,7 +185,13 @@ async function syncCJInventory() {
   } catch (error) {
     console.error("Inventory sync stopped:", error.message);
     process.exitCode = 1;
+
   } finally {
+    // Close the dedicated connection and release the lock
+    if (lockClient) {
+      lockClient.release(true);
+    }
+
     await pool.end();
   }
 }

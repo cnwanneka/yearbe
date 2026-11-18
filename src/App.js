@@ -17,6 +17,8 @@ import './App.css';
 import { CartProvider } from './components/CartContext';
 import SingleBedsheetDetail from './components/SingleBedsheetDetail';
 import DoubleBedsheetDetail from './components/DoubleBedsheetDetail';
+import CJCatalogue from "./components/CJCatalogue";
+import CJProductDetail from "./components/CJProductDetail";
 
 // Guard against missing Stripe key (prevents crash/blank screen)
 const stripeKey = process.env.REACT_APP_STRIPE_KEY;
@@ -35,6 +37,24 @@ function App() {
               <Route path="/single-bedsheet" element={<SingleBedsheetDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+
+              {/* CJdropshipping catalogue preview */}
+              
+              {process.env.NODE_ENV === "development" && (
+                <>
+                  <Route
+                    path="/cj-catalogue"
+                    element={<CJCatalogue />}
+                  />
+
+                  <Route
+                    path="/cj-catalogue/:id"
+                    element={<CJProductDetail />}
+                  />
+                </>
+              )}
+
+
 
               {/* Support both /returns and /returnpolicy */}
               <Route path="/returns" element={<ReturnPolicy />} />

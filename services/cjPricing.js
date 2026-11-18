@@ -8,6 +8,7 @@ const FIXED_PAYMENT_FEE = 0.20;
 
 async function getProductQuote({
   sku,
+  variantId = null,
   destination = "GB",
   quantity = 1,
   preferredMethod = "",
@@ -40,8 +41,9 @@ async function getProductQuote({
     FROM cj_variants v
     JOIN cj_products p ON p.id = v.product_id
     WHERE v.sku = $1
+      AND ($2::integer IS NULL OR v.id = $2)
     LIMIT 1
-  `, [sku]);
+  `, [sku, variantId]);
 
   if (result.rows.length === 0) {
     throw new Error("Product variant not found");

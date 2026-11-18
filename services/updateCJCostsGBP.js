@@ -26,6 +26,15 @@ async function updateCJCostsGBP() {
     console.log(`USD to GBP rate: ${rate}`);
 
     client = await pool.connect();
+    const lock = await client.query(
+      "SELECT pg_try_advisory_lock(81001) AS locked"
+    );
+
+    if (!lock.rows[0].locked) {
+      throw new Error(
+        "Another CJ synchronisation is already running"
+      );
+    }
 
     await client.query("BEGIN");
 
@@ -55,7 +64,7 @@ async function updateCJCostsGBP() {
     process.exitCode = 1;
 
   } finally {
-    if (client) client.release();
+    if (client) client.release(true);
     await pool.end();
   }
 }
