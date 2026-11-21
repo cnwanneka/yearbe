@@ -141,3 +141,37 @@
   color: #b91c1c;
   padding: 10px 0;
 }
+
+
+.cj-detail-buy:not(:disabled) {
+  background-color: #87ceeb;
+  color: #111;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.cj-detail-buy:not(:disabled):hover {
+  background-color: #70bddb;
+}
+
+.cj-detail-buy:disabled {
+  background-color: #ddd;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.cj-view-basket-link {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  padding: 12px;
+  color: #0077a8;
+  border: 1px solid #87ceeb;
+  border-radius: 5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cj-view-basket-link:hover {
+  background-color: #f0f9ff;
+}

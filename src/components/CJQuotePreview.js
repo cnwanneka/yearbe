@@ -1,5 +1,13 @@
 
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef
+} from "react";
+
+import { Link } from "react-router-dom";
+import { CartContext } from "./CartContext";
 
 const countries = [
   ["GB", "United Kingdom"],
@@ -18,70 +26,25 @@ const currencies = [
   "AUD", "NGN", "INR", "ZAR"
 ];
 
-function CJQuotePreview({ variantId, quantity }) {
-  const [destination, setDestination] = useState("GB");
-  const [currency, setCurrency] = useState("GBP");
+function CJQuotePreview({
+  product,
+  selectedVariant,
+  variantId,
+  quantity
+}) {
 
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [destination, setDestination] =
+    useState("GB");
+
+  const [currency, setCurrency] =
+    useState("GBP");
 
   const requestKey = JSON.stringify([
-    variantId, quantity, destination, currency
+    variantId,
+    quantity,
+    destination,
+    currency
   ]);
-
-  const currentResult =
-    result?.key === requestKey ? result : null;
-
-  useEffect(() => {
-    setResult(null);
-  }, [variantId, quantity, destination, currency]);
-
-  async function calculatePrice() {
-    try {
-      setLoading(true);
-      setResult(null);
-
-      const response = await fetch(
-        "http://localhost:3001/api/cj/quote",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            variantId,
-            quantity,
-            destination,
-            currency
-          }),
-          signal: AbortSignal.timeout(30000)
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.error || "Unable to calculate price"
-        );
-      }
-
-      setResult({
-        key: requestKey,
-        quote: data
-      });
-
-    } catch (error) {
-      setResult({
-        key: requestKey,
-        error: error.message
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const quote = currentResult?.quote;
 
   return (
     <div className="cj-quote-container">
@@ -122,6 +85,224 @@ function CJQuotePreview({ variantId, quantity }) {
         ))}
       </select>
 
+      {/* Reset quote when any selection changes */}
+      <CJQuoteResult
+        key={requestKey}
+        product={product}
+        selectedVariant={selectedVariant}
+        variantId={variantId}
+        quantity={quantity}
+        destination={destination}
+        currency={currency}
+      />
+
+    </div>
+  );
+}
+
+function CJQuoteResult({
+  product,
+  selectedVariant,
+  variantId,
+  quantity,
+  destination,
+  currency
+}) {
+
+  const { addCJPreviewToCart } =
+    useContext(CartContext);
+
+  const [quote, setQuote] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [basketMessage, setBasketMessage] =
+    useState("");
+
+  const [added, setAdded] = useState(false);
+
+  const controllerRef = useRef(null);
+
+  const isDevelopment =
+    process.env.NODE_ENV === "development";
+
+  // Cancel obsolete requests when selections change
+  useEffect(() => {
+    return () => {
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+        controllerRef.current = null;
+      }
+    };
+  }, []);
+
+  async function calculatePrice() {
+
+    if (controllerRef.current || !variantId) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    controllerRef.current = controller;
+
+    let timedOut = false;
+
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 30000);
+
+    try {
+      setLoading(true);
+      setQuote(null);
+      setError("");
+      setBasketMessage("");
+      setAdded(false);
+
+      const response = await fetch(
+        "http://localhost:3001/api/cj/quote",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            variantId,
+            quantity,
+            destination,
+            currency
+          }),
+          signal: controller.signal
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error || "Unable to calculate price"
+        );
+      }
+
+      const priceGBP = Number(data.priceGBP);
+
+      // Validate the returned quotation
+      if (
+        Number(data.quantity) !== quantity ||
+        !["number", "string"].includes(
+          typeof data.priceGBP
+        ) ||
+        !Number.isFinite(priceGBP) ||
+        priceGBP <= 0 ||
+        typeof data.shippingMethod !== "string" ||
+        !data.shippingMethod.trim()
+      ) {
+        throw new Error("Invalid price quotation");
+      }
+
+      if (
+        controllerRef.current !== controller ||
+        controller.signal.aborted
+      ) {
+        return;
+      }
+
+      setQuote(data);
+
+    } catch (err) {
+
+      if (controllerRef.current !== controller) {
+        return;
+      }
+
+      if (timedOut) {
+        setError(
+          "Price calculation timed out. Please try again."
+        );
+      } else if (!controller.signal.aborted) {
+        setError(err.message);
+      }
+
+    } finally {
+
+      clearTimeout(timeout);
+
+      if (controllerRef.current === controller) {
+        controllerRef.current = null;
+        setLoading(false);
+      }
+
+    }
+  }
+
+  // Add the current quotation to the preview basket
+  function handleAddToBasket() {
+
+    setBasketMessage("");
+    setAdded(false);
+
+    if (
+      !isDevelopment ||
+      !quote ||
+      loading ||
+      !product ||
+      !selectedVariant
+    ) {
+      return;
+    }
+
+    const success = addCJPreviewToCart({
+      productId: product.id,
+
+      variantId: selectedVariant.id,
+
+      title: product.name,
+
+      sku: selectedVariant.sku,
+
+      variantKey:
+        selectedVariant.variant_key ||
+        selectedVariant.sku ||
+        `Option ${selectedVariant.id}`,
+
+      imageUrl:
+        selectedVariant.variant_image_url ||
+        product.image_url,
+
+      quantity,
+
+      destination,
+
+      currency,
+
+      displayPrice: quote.displayPrice,
+
+      // Total for selected quantity including delivery
+      priceGBP: Number(quote.priceGBP),
+
+      shippingMethod: quote.shippingMethod,
+
+      transitTime: quote.transitTime || null,
+
+      quotedAt: new Date().toISOString()
+    });
+
+    if (success) {
+      setAdded(true);
+
+      setBasketMessage(
+        "Product added to your preview basket."
+      );
+    } else {
+      setBasketMessage(
+        "Unable to add product. Please calculate the price again."
+      );
+    }
+  }
+
+  return (
+    <>
+
       <button
         type="button"
         className="cj-calculate-button"
@@ -133,13 +314,14 @@ function CJQuotePreview({ variantId, quantity }) {
           : "Calculate Price & Delivery"}
       </button>
 
-      {currentResult?.error && (
+      {error && (
         <p className="cj-quote-error">
-          {currentResult.error}
+          {error}
         </p>
       )}
 
       {quote && (
+
         <div className="cj-quote-result">
 
           <p className="cj-quote-price">
@@ -176,8 +358,48 @@ function CJQuotePreview({ variantId, quantity }) {
         </div>
       )}
 
-    </div>
+      {isDevelopment && (
+
+        <>
+
+          <button
+            type="button"
+            className="cj-detail-buy"
+            disabled={!quote || loading}
+            onClick={handleAddToBasket}
+          >
+            {added
+              ? "Update Preview Basket"
+              : "Add to Basket (Preview)"}
+          </button>
+
+          {basketMessage && (
+            <p
+              role="status"
+              style={{
+                color: added ? "#16794b" : "#b91c1c",
+                marginTop: "12px"
+              }}
+            >
+              {basketMessage}
+            </p>
+          )}
+
+          {added && (
+            <Link
+              to="/basket"
+              className="cj-view-basket-link"
+            >
+              View Basket →
+            </Link>
+          )}
+
+        </>
+      )}
+
+    </>
   );
 }
 
 export default CJQuotePreview;
+

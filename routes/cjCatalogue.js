@@ -4,6 +4,17 @@ const pool = require("../database/db");
 
 const router = express.Router();
 const { getProductQuote } = require("../services/cjPricing");
+const {
+  validateCJCheckout,
+  CheckoutValidationError
+} = require("../services/validateCJCheckout");
+
+const {
+  createCJCheckoutSession,
+  getCJCheckoutSession,
+  revalidateCJCheckoutSession,
+  CheckoutSessionError
+} = require("../services/cjCheckoutSessions");
 
 const {
   convertGBP,
@@ -307,4 +318,204 @@ router.post("/quote", async (req, res) => {
   }
 });
 
+
+// Secure CJ checkout validation — preview only
+router.post("/validate-checkout", async (req, res) => {
+
+  res.set("Cache-Control", "no-store");
+
+  // Share the existing quotation request limiter
+  if (quoteInProgress || Date.now() < nextQuoteAt) {
+    return res.status(429).json({
+      success: false,
+      error: "Please wait a few seconds and try again"
+    });
+  }
+
+  quoteInProgress = true;
+
+  try {
+
+    const result = await validateCJCheckout(
+      req.body || {}
+    );
+
+    return res.json(result);
+
+  } catch (error) {
+
+    console.error(
+      "Checkout validation error:",
+      error.message
+    );
+
+    if (error instanceof CheckoutValidationError) {
+      return res.status(error.status).json({
+        success: false,
+        validated: false,
+        previewOnly: true,
+        paymentAllowed: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      validated: false,
+      previewOnly: true,
+      paymentAllowed: false,
+      error: "Unable to validate basket. Please try again."
+    });
+
+  } finally {
+
+    quoteInProgress = false;
+    nextQuoteAt = Date.now() + 1500;
+
+  }
+});
+
+// Shared handler for secure preview checkout sessions
+async function handleCJSessionRequest(
+  req,
+  res,
+  operation,
+  requiresLiveValidation = false,
+  successStatus = 200
+) {
+
+  res.set("Cache-Control", "no-store");
+
+  // Reuse the existing CJ quotation limiter
+  if (requiresLiveValidation) {
+
+    if (
+      quoteInProgress ||
+      Date.now() < nextQuoteAt
+    ) {
+
+      return res.status(429).json({
+
+        success: false,
+
+        previewOnly: true,
+
+        paymentAllowed: false,
+
+        error:
+          "Please wait a few seconds and try again"
+      });
+    }
+
+    quoteInProgress = true;
+  }
+
+  try {
+
+    const result = await operation(
+      req.body || {}
+    );
+
+    return res.status(
+      successStatus
+    ).json(result);
+
+  } catch (error) {
+
+    console.error(
+      "CJ checkout session error:",
+      error.message
+    );
+
+    if (
+      error instanceof CheckoutSessionError ||
+      error instanceof CheckoutValidationError
+    ) {
+
+      return res.status(error.status).json({
+
+        success: false,
+
+        validated: false,
+
+        previewOnly: true,
+
+        paymentAllowed: false,
+
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+
+      success: false,
+
+      validated: false,
+
+      previewOnly: true,
+
+      paymentAllowed: false,
+
+      error:
+        "Unable to process checkout session"
+    });
+
+  } finally {
+
+    if (requiresLiveValidation) {
+
+      quoteInProgress = false;
+
+      nextQuoteAt = Date.now() + 1500;
+    }
+  }
+}
+
+// Create a secure CJ checkout session
+router.post("/checkout/create", (req, res) => {
+
+  return handleCJSessionRequest(
+
+    req,
+
+    res,
+
+    createCJCheckoutSession,
+
+    true,
+
+    201
+  );
+});
+
+// Retrieve a secure CJ checkout session
+router.post("/checkout/status", (req, res) => {
+
+  return handleCJSessionRequest(
+
+    req,
+
+    res,
+
+    getCJCheckoutSession
+  );
+});
+
+// Revalidate an existing CJ checkout session
+router.post("/checkout/revalidate", (req, res) => {
+
+  return handleCJSessionRequest(
+
+    req,
+
+    res,
+
+    revalidateCJCheckoutSession,
+
+    true
+  );
+});
+
 module.exports = router;
+
+
